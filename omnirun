@@ -407,7 +407,7 @@ def main():
 	#endif
 
 	rets = []
-	for ret in sorted(exits.keys()):
+	for ret in sorted(exits.keys(), key=lambda x:-1 if x is None else x):
 		if ret is None:
 			col = color.YELLOW
 		elif ret == 0:
