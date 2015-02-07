@@ -10,7 +10,8 @@ setup(
 	author = 'Radek Podgorny',
 	author_email = 'radek@podgorny.cz',
 	license = 'GPL',
-	packages = find_packages(exclude=['contrib', 'docs', 'tests*']),
+	packages = find_packages(exclude=['contrib', 'docs', 'tests', 'tests*', ]),
+	install_requires = ['docopt', ],
 	extras_require = {
 		'tests': ['coverage', ],
 	},
