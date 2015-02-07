@@ -10,7 +10,7 @@ setup(
 	author = 'Radek Podgorny',
 	author_email = 'radek@podgorny.cz',
 	license = 'GPL',
-	packages = find_packages(),
+	packages = find_packages(exclude=['contrib', 'docs', 'tests*']),
 	extras_require = {
 		'tests': ['coverage', ],
 	},
