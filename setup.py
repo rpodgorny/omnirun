@@ -12,8 +12,8 @@ setup(
 	license = 'GPL',
 	packages = find_packages(),
 	extras_require = {
-		'tests': ['coverage'],
-	}
+		'tests': ['coverage', ],
+	},
 	entry_points = {
 		'console_scripts': ['omnirun=omnirun:main', ],
 	},
