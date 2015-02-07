@@ -14,4 +14,5 @@ setup(
 	entry_points = {
 		'console_scripts': ['omnirun=omnirun:main', ],
 	},
+	test_suite = 'tests',
 )
