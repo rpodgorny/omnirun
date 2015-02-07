@@ -11,6 +11,9 @@ setup(
 	author_email = 'radek@podgorny.cz',
 	license = 'GPL',
 	packages = find_packages(),
+	extras_require = {
+		'tests': ['coverage'],
+	}
 	entry_points = {
 		'console_scripts': ['omnirun=omnirun:main', ],
 	},
