@@ -86,7 +86,7 @@ def get_hosts():
 
 	lines_exp = []
 	for line in lines:
-		lines_exp.extend(expand(line))
+		lines_exp.extend(expand_host(line))
 	#endfor
 
 	ret = {}
@@ -100,7 +100,7 @@ def get_hosts():
 #enddef
 
 
-def expand(s):
+def expand_host(s):
 	if not '[' in s or not '-' in s or not ']' in s: return [s, ]
 
 	pre = s.split('[')[0]
@@ -210,6 +210,13 @@ def main():
 
 	if args['-H']:
 		hosts = set(args['-H'].split(','))
+
+		expanded_hosts = set()
+		for host in hosts:
+			expanded_hosts |= set(expand_host(host))
+		#endfor
+
+		hosts = expanded_hosts
 	else:
 		tag = args['-T']
 
