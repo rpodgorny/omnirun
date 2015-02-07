@@ -11,7 +11,7 @@ Usage:
 
 Options:
   -H <host1,host2,...>           Comma sparated list of hosts to connect to.
-  -t <tag>                       Only consider hosts with <tag>.
+  -T <tag>                       Only consider hosts with <tag>.
   --user=<user>                  Username to use for the remote host.
   --pass=<pass>                  Password to use for sshpass.
   --no-strict-host-key-checking  Disable ssh host key checking.
@@ -20,6 +20,7 @@ Options:
   --single                       Run in single thread - skip tmux at all.
   --sudo                         Use sudo on remote system.
   --copy-keys                    Copy local ssh keys to remote servers.
+  -t                             Force tty allocation on the remote host (add -t to ssh options).
 
 Arguments:
   <command>  Command to run.
@@ -210,7 +211,7 @@ def main():
 	if args['-H']:
 		hosts = set(args['-H'].split(','))
 	else:
-		tag = args['-t']
+		tag = args['-T']
 
 		hosts = set()
 		for host, tags in get_hosts().items():
@@ -222,8 +223,11 @@ def main():
 
 	sshopts = ''
 	#sshopts += ' -o ConnectTImeout=2'
+
 	# TODO: the -t seems to be breaking logins to windows machines - figure shomething out
-	sshopts += '-t'
+	if args['-t']:
+		sshopts += ' -t'
+	#endif
 
 	if args['--no-strict-host-key-checking']:
 		sshopts += ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
