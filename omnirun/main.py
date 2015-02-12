@@ -260,10 +260,15 @@ def main():
 
 			tmp_fn = '/tmp/%s' % int(time.time())
 
-			#cmd = 'ssh %s %s \'sh -c "a=`mktemp`; cat >$a; chmod a+x $a; %s $a; rm $a"\' <%s' % (sshopts, host_full, sudo, args['<script>'])
-			cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s" <%s' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn, args['<script>'])
-			#cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s"' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn)
-			#cmd = 'ssh %s %s "cat | %s sh"' % (sshopts, host_full, sudo)
+			if args['<script>'].startswith('http://') \
+			or args['<script>'].startswith('https://'):
+				cmd = 'ssh %s %s "wget -O %s --no-check-certificate \"%s\"; chmod a+x %s; %s %s; rm %s"' % (sshopts, host_full, tmp_fn, args['<script>'], tmp_fn, sudo, tmp_fn, tmp_fn)
+			else:
+				#cmd = 'ssh %s %s \'sh -c "a=`mktemp`; cat >$a; chmod a+x $a; %s $a; rm $a"\' <%s' % (sshopts, host_full, sudo, args['<script>'])
+				cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s" <%s' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn, args['<script>'])
+				#cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s"' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn)
+				#cmd = 'ssh %s %s "cat | %s sh"' % (sshopts, host_full, sudo)
+			#endif
 		elif args['<command>']:
 			cmd = 'ssh %s %s "%s"' % (sshopts, host_full, args['<command>'].replace('"', '\\"'))
 		else:
