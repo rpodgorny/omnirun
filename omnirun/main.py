@@ -26,7 +26,7 @@ Arguments:
   <command>  Command to run.
 '''
 
-__version__ = '0.1'
+from omnirun import __version__
 
 import sys
 import docopt
@@ -424,7 +424,10 @@ def main():
 
 	rets = []
 	for ret in sorted(exits.keys(), key=lambda x:-1 if x is None else x):
+		ret_str = str(ret)
+
 		if ret is None:
+			ret_str = 'unknown'
 			col = color.YELLOW
 		elif ret == 0:
 			col = color.GREEN
@@ -432,7 +435,7 @@ def main():
 			col = color.RED
 		#endif
 
-		rets.append(' %s%s: %d' % (col, ret, len(exits[ret])))
+		rets.append(' %s%s: %d' % (col, ret_str, len(exits[ret])))
 	#endfor
 
 	print('rets: %s%s' % (', '.join(rets), color.END))
