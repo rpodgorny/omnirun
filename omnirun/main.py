@@ -21,6 +21,8 @@ Options:
   --sudo                         Use sudo on remote system.
   --copy-keys                    Copy local ssh keys to remote servers.
   -t                             Force tty allocation on the remote host (add -t to ssh options).
+  --keep-open=<0,1,2,...,unknown,nonzero>
+                                 Keep the window open when exit status is among the enumerated.
 
 Arguments:
   <command>  Command to run.
@@ -320,6 +322,39 @@ def main():
 			nprocs = 10
 		#endtry
 
+		keep_open = args['--keep-open']
+		if not keep_open:
+			keep_open = set()
+		elif ',' in keep_open:
+			rcs = keep_open.split(',')
+			keep_open = set()
+			for rc in rcs:
+				try:
+					keep_open.add(int(rc))
+				except:
+					keep_open.add(rc)
+				#endtry
+			#endfor
+		else:
+			rc = keep_open
+			keep_open = set()
+			try:
+				keep_open.add(int(rc))
+			except:
+				keep_open.add(rc)
+			#endtry
+		#endif
+
+		if 'unknown' in keep_open:
+			keep_open.remove('unknown')
+			keep_open.add(None)
+		#endif
+
+		if 'nonzero' in keep_open:
+			keep_open.remove('nonzero')
+			keep_open |= set(range(1, 256))
+		#endif
+
 		cmds_to_go = cmds.copy()
 		running = {}
 		total = len(cmds_to_go)
@@ -369,7 +404,9 @@ def main():
 				if not is_dead: continue
 
 				# TODO: don't kill the window if it's currently open?
-				tmux_kill_window(w_id)
+				if exit_status not in keep_open:
+					tmux_kill_window(w_id)
+				#endif
 
 				host, cmd = running[w_id]
 
