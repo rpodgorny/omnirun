@@ -260,14 +260,18 @@ def main():
 				sudo = ''
 			#endif
 
-			tmp_fn = '/tmp/%s' % int(time.time())
+			tmp_fn = '/tmp/omnirun.%s' % int(time.time())
 
 			if args['<script>'].startswith('http://') \
 			or args['<script>'].startswith('https://'):
-				cmd = 'ssh %s %s "wget -O %s --no-check-certificate \"%s\" && chmod a+x %s && %s %s && rm %s"' % (sshopts, host_full, tmp_fn, args['<script>'], tmp_fn, sudo, tmp_fn, tmp_fn)
+				cmd = 'ssh {sshopts} {host_full} "mkdir {tmp_fn} && cd {tmp_fn}; wget -O {tmp_fn}/script --no-check-certificate \"{script}\" && chmod a+x script && {sudo} ./script && cd - && rm -rf {tmp_fn}"'.format( \
+				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, script=args['<script>'], sudo=sudo)
 			else:
+				cmd = 'ssh {sshopts} {host_full} "mkdir {tmp_fn} && cat >{tmp_fn}/script && chmod a+x ./script && {sudo} ./{script} && cd - && rm -rf {tmp_fn}" <%s'.format( \
+				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, sudo=sudo, script=args['<script>'])
+
+				# these are some other tries - probably broken or half-working...
 				#cmd = 'ssh %s %s \'sh -c "a=`mktemp`; cat >$a; chmod a+x $a; %s $a; rm $a"\' <%s' % (sshopts, host_full, sudo, args['<script>'])
-				cmd = 'ssh %s %s "cat >%s && chmod a+x %s && %s %s && rm %s" <%s' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn, args['<script>'])
 				#cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s"' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn)
 				#cmd = 'ssh %s %s "cat | %s sh"' % (sshopts, host_full, sudo)
 			#endif
