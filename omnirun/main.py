@@ -267,7 +267,7 @@ def main():
 				cmd = 'ssh {sshopts} {host_full} "mkdir {tmp_fn} && cd {tmp_fn}; wget -O {tmp_fn}/script --no-check-certificate \"{script}\" && chmod a+x script && {sudo} ./script && cd - && rm -rf {tmp_fn}"'.format( \
 				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, script=args['<script>'], sudo=sudo)
 			else:
-				cmd = 'ssh {sshopts} {host_full} "mkdir {tmp_fn} && cat >{tmp_fn}/script && chmod a+x ./script && {sudo} ./{script} && cd - && rm -rf {tmp_fn}" <%s'.format( \
+				cmd = 'ssh {sshopts} {host_full} "mkdir {tmp_fn} && cat >{tmp_fn}/script && chmod a+x ./script && {sudo} ./script && cd - && rm -rf {tmp_fn}" <{script}'.format( \
 				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, sudo=sudo, script=args['<script>'])
 
 				# these are some other tries - probably broken or half-working...
