@@ -299,6 +299,11 @@ def main():
 		args['--single'] = True
 	#endif
 
+	if len(cmds) == 1:
+		print('only one host, implying --single')
+		args['--single'] = True
+	#endif
+
 	if args['--single']:
 		total = len(cmds)
 		i = 0
