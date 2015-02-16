@@ -313,7 +313,7 @@ def main():
 		for host in sorted(list(cmds.keys())):
 			cmd = cmds[host]
 			i += 1
-			print('%s(%d/%d) %s%s%s' % (color.YELLOW, i, total, color.BOLD, cmd, color.END))
+			print('%s(%d/%d) %s%s%s' % (color.CYAN, i, total, color.BOLD, cmd, color.END))
 			exit_status = subprocess.call(cmd, shell=True)
 
 			if not exit_status in exits: exits[exit_status] = set()
@@ -391,7 +391,7 @@ def main():
 				running[w_id] = (host, cmd)
 
 				i += 1
-				print('%s(%d/%d) (%s) %s%s' % (color.YELLOW, i, total, w_id, cmd, color.END))
+				print('%s(%d/%d) (%s) %s%s' % (color.CYAN, i, total, w_id, cmd, color.END))
 
 				'''
 				if args['--interactive']:
