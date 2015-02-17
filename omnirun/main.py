@@ -125,6 +125,26 @@ def expand_host(s):
 #enddef
 
 
+def host_to_user_pass_host(s):
+	user = None
+	pass_ = None
+	host = None
+
+	if '@' in s:
+		user_pass, host = s.split('@')
+		if ':' in user_pass:
+			user, pass_ = user_pass.split(':')
+		else:
+			user = user_pass
+		#endif
+	else:
+		host = s
+	#endif
+
+	return user, pass_, host
+#enddef
+
+
 def check_pub_key(fn):
 	with open(fn, 'r') as f:
 		line = f.readline()
@@ -247,8 +267,18 @@ def main():
 
 	cmds = {}
 	for host in hosts:
+		user, pass_, host = host_to_user_pass_host(host)
+
 		if args['--user']:
-			host_full = '%s@%s' % (args['--user'], host)
+			user = args['--user']
+		#endif
+
+		if args['--pass']:
+			pass_ = args['--pass']
+		#endif
+
+		if user:
+			host_full = '%s@%s' % (user, host)
 		else:
 			host_full = host
 		#endif
@@ -284,12 +314,12 @@ def main():
 			cmd = 'ssh %s %s' % (sshopts, host_full)
 		#endif
 
-		if args['--pass']:
+		if pass_:
 			if not os.path.isfile(SSHPASS):
 				raise Exception('%s does not exist' % SSHPASS)
 			#endif
 
-			cmd = '%s -p%s %s' % (SSHPASS, args['--pass'], cmd)
+			cmd = '%s -p%s %s' % (SSHPASS, pass_, cmd)
 		#endif
 
 		cmds[host] = cmd
