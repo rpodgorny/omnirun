@@ -225,7 +225,7 @@ def main():
 	else:
 		tag = args['-T']
 
-		fn = os.path.expanduser('~/.omnirun')
+		fn = os.path.expanduser('~/.omnirun.conf')
 		if os.path.isfile(fn):
 			hosts_from_file = get_hosts(fn)
 		else:
