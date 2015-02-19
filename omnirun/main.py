@@ -61,36 +61,16 @@ class color:
 #endclass
 
 
-def get_hosts():
-	lines = [
-		'admiral.podgorny.cz arch linux podgorny',
-		'berta.podgorny.cz arch arm linux podgorny',
-		'chuck.podgorny.cz arch linux podgorny',
-		'europa.podgorny.cz arch arm linux podgorny router',
-		'family.podgorny.cz podgorny windows',
-		'hubert.asterix.cz arch asterix linux',
-		'kulicka.podgorny.cz arch arm linux podgorny',
-		'lbalanda.asterix.cz asterix windows',
-		'manasek.asterix.cz asterix windows',
-		'milan.podgorny.cz arch arm linux podgorny',
-		'milhouse.podgorny.cz arch linux podgorny sureboot',
-		'mj[1-200].asterix.cz asterix atx300 windows',
-		'mj[1-2000]d.asterix.cz asterix atx300d windows',
-		'mrtvola.asterix.cz arch asterix linux',
-		'orion.asterix.cz arch asterix linux sureboot',
-		'pimiento.podgorny.cz arch linux podgorny',
-		'kapitan.podgorny.cz gentoo linux podgorny',
-		'krutor.podgorny.cz arch linux',
-		'pokuston.podgorny.cz arch arm linux podgorny',
-		'rpodgorny.podgorny.cz arch linux podgorny',
-		'simir.podgorny.cz arch linux podgorny',
-		'taurus.asterix.cz arch asterix linux router',
-		'ucho.podgorny.cz arch arm linux podgorny',
-		'zombie.asterix.cz arch linux asterix',
-	]
+def get_hosts(fn):
+	with open(fn, 'r') as f:
+		lines = f.readlines()
+	#endwith
 
 	lines_exp = []
 	for line in lines:
+		line = line.strip()
+		if not line: continue
+		if line.startswith('#'): continue
 		lines_exp.extend(expand_host(line))
 	#endfor
 
@@ -245,8 +225,15 @@ def main():
 	else:
 		tag = args['-T']
 
+		fn = os.path.expanduser('~/.omnirun')
+		if os.path.isfile(fn):
+			hosts_from_file = get_hosts(fn)
+		else:
+			hosts_from_file = {}
+		#endif
+
 		hosts = set()
-		for host, tags in get_hosts().items():
+		for host, tags in hosts_from_file.items():
 			if not tag or tag in tags:
 				hosts.add(host)
 			#endif
