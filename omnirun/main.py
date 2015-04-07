@@ -17,6 +17,8 @@ Options:
   --no-strict-host-key-checking  Disable ssh host key checking.
   --interactive                  Interactive mode. You have to disconnect manually.
   -p <num>                       Number of parallel processes to run.
+  -4                             Force connection over IPv4.
+  -6                             Force connection over IPv6.
   --single                       Run in single thread - skip tmux at all.
   --sudo                         Use sudo on remote system.
   --copy-keys                    Copy local ssh keys to remote servers.
@@ -250,6 +252,14 @@ def main():
 
 	if args['--no-strict-host-key-checking']:
 		sshopts += ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+	#endif
+
+	if args['-4']:
+		sshopts += ' -4'
+	#eendif
+
+	if args['-6']:
+		sshopts += ' -6'
 	#endif
 
 	cmds = {}
