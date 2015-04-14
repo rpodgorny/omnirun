@@ -224,7 +224,7 @@ def main():
 		#endfor
 
 		hosts = expanded_hosts
-	else:
+	elif args['-T']:
 		tag = args['-T']
 
 		fn = os.path.expanduser('~/.omnirun.conf')
@@ -240,6 +240,9 @@ def main():
 				hosts.add(host)
 			#endif
 		#endfor
+	else:
+		print('neither hosts nor tags specified, this does not seem right!')
+		return
 	#endif
 
 	sshopts = ''
