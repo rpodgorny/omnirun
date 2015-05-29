@@ -19,7 +19,6 @@ Options:
   -p <num>                       Number of parallel processes to run.
   -4                             Force connection over IPv4.
   -6                             Force connection over IPv6.
-  --single                       Run in single thread - skip tmux at all.
   --sudo                         Use sudo on remote system.
   --copy-keys                    Copy local ssh keys to remote servers.
   -t                             Force tty allocation on the remote host (add -t to ssh options).
@@ -328,16 +327,22 @@ def main():
 	exits = {}
 
 	if not os.path.isfile(TMUX):
-		print('%s%s not found, implying --single%s' % (color.RED, TMUX, color.END))
-		args['--single'] = True
+		print('%s%s not found, implying -p1%s' % (color.RED, TMUX, color.END))
+		args['-p'] = 1
 	#endif
 
 	if len(cmds) == 1:
-		print('only one host, implying --single')
-		args['--single'] = True
+		print('only one host, implying -p1')
+		args['-p'] = 1
 	#endif
 
-	if args['--single']:
+	try:
+		nprocs = int(args['-p'])
+	except:
+		nprocs = 1
+	#endtry
+
+	if nprocs == 1:
 		total = len(cmds)
 		i = 0
 		for host in sorted(list(cmds.keys())):
@@ -358,12 +363,6 @@ def main():
 			print('%s%s -> ret: %d%s' % (col, cmd, exit_status, color.END))
 		#endfor
 	else:
-		try:
-			nprocs = int(args['-p'])
-		except:
-			nprocs = 10
-		#endtry
-
 		keep_open = args['--keep-open']
 		if not keep_open:
 			keep_open = set()
