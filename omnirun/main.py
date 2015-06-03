@@ -326,21 +326,21 @@ def main():
 
 	exits = {}
 
-	if not os.path.isfile(TMUX):
-		print('%s%s not found, implying -p1%s' % (color.RED, TMUX, color.END))
-		args['-p'] = 1
-	#endif
-
-	if len(cmds) == 1:
-		print('only one host, implying -p1')
-		args['-p'] = 1
-	#endif
-
 	try:
 		nprocs = int(args['-p'])
 	except:
 		nprocs = 1
 	#endtry
+
+	if nprocs > 1 and not os.path.isfile(TMUX):
+		print('%s%s not found, implying -p1%s' % (color.RED, TMUX, color.END))
+		nprocs = 1
+	#endif
+
+	if nprocs > 1 and len(cmds) == 1:
+		print('only one host, implying -p1')
+		nprocs = 1
+	#endif
 
 	if nprocs == 1:
 		total = len(cmds)
