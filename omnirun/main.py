@@ -418,15 +418,10 @@ def main():
 			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
 
-			print('%s(%d/%d) %s%s%s' % (color.CYAN, len(exits) + 1, total, color.BOLD, cmd, color.END))
+			print('%s(%d/%d) %s%s%s' % (color.CYAN, len(hosts_to_go), total, color.BOLD, cmd, color.END))
 			exit_status = subprocess.call(cmd, shell=True)
 
-			if exit_status in retry_on:
-				# return back to queue
-				hosts_to_go.append(host)
-			else:
-				exits[host] = exit_status
-			#endif
+			exits[host] = exit_status
 
 			if exit_status == 0:
 				col = color.GREEN
@@ -434,7 +429,12 @@ def main():
 				col = color.RED
 			#endif
 
-			print('%s%s -> ret: %d%s' % (col, cmd, exit_status, color.END))
+			print('%s(%d/%d) %s -> %s%s' % (col, len(exits), total, cmd, exit_status, color.END))
+
+			if exit_status in retry_on:
+				# return back to queue
+				hosts_to_go.append(host)
+			#endif
 		#endwhile
 	else:
 		hosts_to_go = sorted(list(cmds.keys()))
@@ -458,7 +458,7 @@ def main():
 
 				running[w_id] = (host, cmd)
 
-				print('%s(%d/%d) (%s) %s%s%s' % (color.CYAN, len(exits) + 1, total, w_id, color.BOLD, cmd, color.END))
+				print('%s(%d/%d) (%s) %s%s%s' % (color.CYAN, len(hosts_to_go), total, w_id, color.BOLD, cmd, color.END))
 
 				'''
 				if args['--interactive']:
@@ -489,12 +489,7 @@ def main():
 
 				host, cmd = running[w_id]
 
-				if exit_status in retry_on:
-					# return to queue
-					hosts_to_go.append(host)
-				else:
-					exits[host] = exit_status
-				#endif
+				exits[host] = exit_status
 
 				if exit_status is None:
 					col = color.YELLOW
@@ -505,9 +500,14 @@ def main():
 					col = color.RED
 				#endif
 
-				print('%s(%s) %s -> ret: %s%s' % (col, w_id, cmd, exit_status, color.END))
+				print('%s(%d/%d) (%s) %s -> %s%s' % (col, len(exits), total, w_id, cmd, exit_status, color.END))
 
 				del running[w_id]
+
+				if exit_status in retry_on:
+					# return to queue
+					hosts_to_go.append(host)
+				#endif
 			#endfor
 
 			for w_id in running.copy():
@@ -519,12 +519,7 @@ def main():
 				# TODO: this is cut-n-pasted from above. unite!
 				host, cmd = running[w_id]
 
-				if exit_status in retry_on:
-					# return to queue
-					hosts_to_go.append(host)
-				else:
-					exits[host] = exit_status
-				#endif
+				exits[host] = exit_status
 
 				if exit_status is None:
 					col = color.YELLOW
@@ -535,9 +530,14 @@ def main():
 					col = color.RED
 				#endif
 
-				print('%s(%s) %s -> ret: %s%s' % (col, w_id, cmd, exit_status, color.END))
+				print('%s(%d/%d) (%s) %s -> %s%s' % (col, len(exits), total, w_id, cmd, exit_status, color.END))
 
 				del running[w_id]
+
+				if exit_status in retry_on:
+					# return to queue
+					hosts_to_go.append(host)
+				#endif
 			#endfor
 
 			if not running and not hosts_to_go: break
