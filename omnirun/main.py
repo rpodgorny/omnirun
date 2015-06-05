@@ -209,6 +209,34 @@ def tmux_set_window_option(w_id, option, value):
 #enddef
 
 
+def rc_parse(s):
+	ret = set()
+
+	if s is None: return ret
+
+	for rc in s.split(','):
+		if not rc: continue
+		try:
+			ret.add(int(rc))
+		except:
+			ret.add(rc)
+		#endtry
+	#endfor
+
+	if 'unknown' in ret:
+		ret.remove('unknown')
+		ret.add(None)
+	#endif
+
+	if 'nonzero' in ret:
+		ret.remove('nonzero')
+		ret |= set(range(1, 256))
+	#endif
+
+	return ret
+#enddef
+
+
 def main():
 	args = docopt.docopt(__doc__, version=__version__)
 
@@ -326,72 +354,8 @@ def main():
 		cmds[host] = cmd
 	#endfor
 
-	keep_open = args['--keep-open']
-	if not keep_open:
-		keep_open = set()
-	elif ',' in keep_open:
-		rcs = keep_open.split(',')
-		keep_open = set()
-		for rc in rcs:
-			try:
-				keep_open.add(int(rc))
-			except:
-				keep_open.add(rc)
-			#endtry
-		#endfor
-	else:
-		rc = keep_open
-		keep_open = set()
-		try:
-			keep_open.add(int(rc))
-		except:
-			keep_open.add(rc)
-		#endtry
-	#endif
-
-	if 'unknown' in keep_open:
-		keep_open.remove('unknown')
-		keep_open.add(None)
-	#endif
-
-	if 'nonzero' in keep_open:
-		keep_open.remove('nonzero')
-		keep_open |= set(range(1, 256))
-	#endif
-
-	# TODO: this is just cut-n-pasted from --keep-open - unite!
-	retry_on = args['--retry-on']
-	if not retry_on:
-		retry_on = set()
-	elif ',' in retry_on:
-		rcs = retry_on.split(',')
-		retry_on = set()
-		for rc in rcs:
-			try:
-				retry_on.add(int(rc))
-			except:
-				retry_on.add(rc)
-			#endtry
-		#endfor
-	else:
-		rc = retry_on
-		retry_on = set()
-		try:
-			retry_on.add(int(rc))
-		except:
-			retry_on.add(rc)
-		#endtry
-	#endif
-
-	if 'unknown' in retry_on:
-		retry_on.remove('unknown')
-		retry_on.add(None)
-	#endif
-
-	if 'nonzero' in retry_on:
-		retry_on.remove('nonzero')
-		retry_on |= set(range(1, 256))
-	#endif
+	keep_open = rc_parse(args['--keep-open'])
+	retry_on = rc_parse(args['--retry-on'])
 
 	try:
 		nprocs = int(args['-p'])
