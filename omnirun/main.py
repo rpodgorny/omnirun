@@ -451,18 +451,20 @@ def main():
 
 				host, cmd = running[w_id]
 
+				exit_status_str = exit_status
+
 				exits[host] = exit_status
 
 				if exit_status is None:
 					col = color.YELLOW
-					exit_status = 'unknown'  # TODO: not very nice
+					exit_status_str = 'unknown'  # TODO: not very nice
 				elif exit_status == 0:
 					col = color.GREEN
 				else:
 					col = color.RED
 				#endif
 
-				print('%s(%d/%d) (%s) %s -> %s%s' % (col, len(exits), total, w_id, cmd, exit_status, color.END))
+				print('%s(%d/%d) (%s) %s -> %s%s' % (col, len(exits), total, w_id, cmd, exit_status_str, color.END))
 
 				del running[w_id]
 
@@ -477,6 +479,7 @@ def main():
 
 				print('%s not in statuses?!? wtf!!!' % w_id)
 				exit_status = None
+				exit_status_str = exit_status
 
 				# TODO: this is cut-n-pasted from above. unite!
 				host, cmd = running[w_id]
@@ -485,14 +488,14 @@ def main():
 
 				if exit_status is None:
 					col = color.YELLOW
-					exit_status = 'unknown'  # TODO: not very nice
+					exit_status_str = 'unknown'  # TODO: not very nice
 				elif exit_status == 0:
 					col = color.GREEN
 				else:
 					col = color.RED
 				#endif
 
-				print('%s(%d/%d) (%s) %s -> %s%s' % (col, len(exits), total, w_id, cmd, exit_status, color.END))
+				print('%s(%d/%d) (%s) %s -> %s%s' % (col, len(exits), total, w_id, cmd, exit_status_str, color.END))
 
 				del running[w_id]
 
