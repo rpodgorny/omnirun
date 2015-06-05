@@ -373,11 +373,11 @@ def main():
 		nprocs = 1
 	#endif
 
+	hosts_to_go = sorted(list(cmds.keys()))
+	total = len(hosts_to_go)
 	exits = {}
 
 	if nprocs == 1:
-		hosts_to_go = sorted(list(cmds.keys()))
-		total = len(hosts_to_go)
 		while hosts_to_go:
 			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
@@ -401,8 +401,6 @@ def main():
 			#endif
 		#endwhile
 	else:
-		hosts_to_go = sorted(list(cmds.keys()))
-		total = len(hosts_to_go)
 		running = {}
 		while 1:
 			while len(running) < nprocs and hosts_to_go:
