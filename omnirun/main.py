@@ -24,6 +24,8 @@ Options:
   -t                             Force tty allocation on the remote host (add -t to ssh options).
   --keep-open=<0,1,2,...,unknown,nonzero>
                                  Keep the window open when exit status is among the enumerated.
+  --retry-on=<0,1,2,...,unknown,nonzero>
+                                 Keep running the command while the exit status is among the enumerated.
 
 Arguments:
   <command>  Command to run.
@@ -324,7 +326,72 @@ def main():
 		cmds[host] = cmd
 	#endfor
 
-	exits = {}
+	keep_open = args['--keep-open']
+	if not keep_open:
+		keep_open = set()
+	elif ',' in keep_open:
+		rcs = keep_open.split(',')
+		keep_open = set()
+		for rc in rcs:
+			try:
+				keep_open.add(int(rc))
+			except:
+				keep_open.add(rc)
+			#endtry
+		#endfor
+	else:
+		rc = keep_open
+		keep_open = set()
+		try:
+			keep_open.add(int(rc))
+		except:
+			keep_open.add(rc)
+		#endtry
+	#endif
+
+	if 'unknown' in keep_open:
+		keep_open.remove('unknown')
+		keep_open.add(None)
+	#endif
+
+	if 'nonzero' in keep_open:
+		keep_open.remove('nonzero')
+		keep_open |= set(range(1, 256))
+	#endif
+
+	# TODO: this is just cut-n-pasted from --keep-open - unite!
+	retry_on = args['--retry-on']
+	if not retry_on:
+		retry_on = set()
+	elif ',' in retry_on:
+		rcs = retry_on.split(',')
+		retry_on = set()
+		for rc in rcs:
+			try:
+				retry_on.add(int(rc))
+			except:
+				retry_on.add(rc)
+			#endtry
+		#endfor
+	else:
+		rc = retry_on
+		retry_on = set()
+		try:
+			retry_on.add(int(rc))
+		except:
+			retry_on.add(rc)
+		#endtry
+	#endif
+
+	if 'unknown' in retry_on:
+		retry_on.remove('unknown')
+		retry_on.add(None)
+	#endif
+
+	if 'nonzero' in retry_on:
+		retry_on.remove('nonzero')
+		retry_on |= set(range(1, 256))
+	#endif
 
 	try:
 		nprocs = int(args['-p'])
@@ -342,17 +409,24 @@ def main():
 		nprocs = 1
 	#endif
 
+	exits = {}
+
 	if nprocs == 1:
-		total = len(cmds)
-		i = 0
-		for host in sorted(list(cmds.keys())):
+		hosts_to_go = sorted(list(cmds.keys()))
+		total = len(hosts_to_go)
+		while hosts_to_go:
+			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
-			i += 1
-			print('%s(%d/%d) %s%s%s' % (color.CYAN, i, total, color.BOLD, cmd, color.END))
+
+			print('%s(%d/%d) %s%s%s' % (color.CYAN, len(exits) + 1, total, color.BOLD, cmd, color.END))
 			exit_status = subprocess.call(cmd, shell=True)
 
-			if not exit_status in exits: exits[exit_status] = set()
-			exits[exit_status].add(host)
+			if exit_status in retry_on:
+				# return back to queue
+				hosts_to_go.append(host)
+			else:
+				exits[host] = exit_status
+			#endif
 
 			if exit_status == 0:
 				col = color.GREEN
@@ -361,50 +435,15 @@ def main():
 			#endif
 
 			print('%s%s -> ret: %d%s' % (col, cmd, exit_status, color.END))
-		#endfor
+		#endwhile
 	else:
-		keep_open = args['--keep-open']
-		if not keep_open:
-			keep_open = set()
-		elif ',' in keep_open:
-			rcs = keep_open.split(',')
-			keep_open = set()
-			for rc in rcs:
-				try:
-					keep_open.add(int(rc))
-				except:
-					keep_open.add(rc)
-				#endtry
-			#endfor
-		else:
-			rc = keep_open
-			keep_open = set()
-			try:
-				keep_open.add(int(rc))
-			except:
-				keep_open.add(rc)
-			#endtry
-		#endif
-
-		if 'unknown' in keep_open:
-			keep_open.remove('unknown')
-			keep_open.add(None)
-		#endif
-
-		if 'nonzero' in keep_open:
-			keep_open.remove('nonzero')
-			keep_open |= set(range(1, 256))
-		#endif
-
-		cmds_to_go = cmds.copy()
+		hosts_to_go = sorted(list(cmds.keys()))
+		total = len(hosts_to_go)
 		running = {}
-		total = len(cmds_to_go)
-		i = 0
 		while 1:
-			while len(running) < nprocs and cmds_to_go:
-				host = sorted(list(cmds_to_go.keys()))[0]
-				cmd = cmds_to_go[host]
-				del cmds_to_go[host]
+			while len(running) < nprocs and hosts_to_go:
+				host = hosts_to_go.pop(0)
+				cmd = cmds[host]
 
 				if args['--interactive']:
 					w_id = tmux_new_window(host)
@@ -419,8 +458,7 @@ def main():
 
 				running[w_id] = (host, cmd)
 
-				i += 1
-				print('%s(%d/%d) (%s) %s%s' % (color.CYAN, i, total, w_id, cmd, color.END))
+				print('%s(%d/%d) (%s) %s%s%s' % (color.CYAN, len(exits) + 1, total, w_id, color.BOLD, cmd, color.END))
 
 				'''
 				if args['--interactive']:
@@ -451,8 +489,12 @@ def main():
 
 				host, cmd = running[w_id]
 
-				if not exit_status in exits: exits[exit_status] = set()
-				exits[exit_status].add(host)
+				if exit_status in retry_on:
+					# return to queue
+					hosts_to_go.append(host)
+				else:
+					exits[host] = exit_status
+				#endif
 
 				if exit_status is None:
 					col = color.YELLOW
@@ -477,8 +519,12 @@ def main():
 				# TODO: this is cut-n-pasted from above. unite!
 				host, cmd = running[w_id]
 
-				if not exit_status in exits: exits[exit_status] = set()
-				exits[exit_status].add(host)
+				if exit_status in retry_on:
+					# return to queue
+					hosts_to_go.append(host)
+				else:
+					exits[host] = exit_status
+				#endif
 
 				if exit_status is None:
 					col = color.YELLOW
@@ -494,14 +540,22 @@ def main():
 				del running[w_id]
 			#endfor
 
-			if not running and not cmds_to_go: break
+			if not running and not hosts_to_go: break
 
 			time.sleep(1)
 		#endwhile
 	#endif
 
+	# TODO: rename to something better
+	stats = {}
+	for host, exit_status in exits.items():
+		if not exit_status in stats: stats[exit_status] = set()
+		stats[exit_status].add(host)
+	#endfor
+
+	# TODO: rename to something better
 	rets = []
-	for ret in sorted(exits.keys(), key=lambda x:-1 if x is None else x):
+	for ret in sorted(stats.keys(), key=lambda x:-1 if x is None else x):
 		ret_str = str(ret)
 
 		if ret is None:
@@ -513,7 +567,7 @@ def main():
 			col = color.RED
 		#endif
 
-		rets.append(' %s%s: %d' % (col, ret_str, len(exits[ret])))
+		rets.append(' %s%s: %d' % (col, ret_str, len(stats[ret])))
 	#endfor
 
 	print('rets: %s%s' % (', '.join(rets), color.END))
