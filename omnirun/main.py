@@ -214,24 +214,23 @@ def rc_parse(s):
 
 	if s is None: return ret
 
-	for rc in s.split(','):
-		if not rc: continue
-		try:
-			ret.add(int(rc))
-		except:
-			ret.add(rc)
-		#endtry
-	#endfor
+	rcs = set(s.split(','))
 
-	if 'unknown' in ret:
-		ret.remove('unknown')
+	if 'unknown' in rcs:
+		rcs.remove('unknown')
 		ret.add(None)
 	#endif
 
-	if 'nonzero' in ret:
-		ret.remove('nonzero')
+	if 'nonzero' in rcs:
+		rcs.remove('nonzero')
 		ret |= set(range(1, 256))
 	#endif
+
+	for rc in rcs:
+		rc = rc.strip()
+		if not rc: continue
+		ret.add(int(rc))
+	#endfor
 
 	return ret
 #enddef
