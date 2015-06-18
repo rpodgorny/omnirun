@@ -46,7 +46,6 @@ from tmux import *
 
 TMUX = '/usr/bin/tmux'
 SSHPASS = '/usr/bin/sshpass'
-#PUB_KEY_FN = os.path.expanduser('~/.ssh/id_ecdsa.pub')
 MAX_FORKS = 10
 DEBUG = 0
 
