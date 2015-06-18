@@ -36,11 +36,8 @@ from omnirun import __version__
 import sys
 import docopt
 import os
-import pwd
-import socket
 import time
 import subprocess
-import re
 from tmux import *
 
 
