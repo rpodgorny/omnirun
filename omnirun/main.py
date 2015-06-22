@@ -38,7 +38,7 @@ import docopt
 import os
 import time
 import subprocess
-from tmux import *
+from omnirun.tmux import *
 
 
 TMUX = '/usr/bin/tmux'
@@ -298,6 +298,63 @@ def main():
 #enddef
 
 
+def print_start(cmd, hosts_to_go, total, window_id=None):
+	if window_id is None:
+		print('%s%s%s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, cmd, color.END, len(hosts_to_go), total, color.END))
+	else:
+		print('%s%s%s%s (%s) (%d of %d to go)%s' % (color.CYAN, color.BOLD, cmd, window_id, color.END, len(hosts_to_go), total, color.END))
+	#endif
+#enddef
+
+
+def print_done(cmd, exit_status, exits, total, window_id=None):
+	exit_status_str = exit_status
+	if exit_status is None:
+		col = color.YELLOW
+		exit_status_str = 'unknown'  # TODO: not very nice
+	elif exit_status == 0:
+		col = color.GREEN
+	else:
+		col = color.RED
+	#endif
+
+	if window_id is None:
+		print('%s%s -> %s%s (%d of %d done)%s' % (col, cmd, exit_status, color.END, len(exits), total, color.END))
+	else:
+		print('%s%s (%s) -> %s%s (%d of %d done)%s' % (col, cmd, window_id, exit_status, color.END, len(exits), total, color.END))
+	#endif
+#enddef
+
+
+def print_stats(exits):
+	# TODO: rename to something better
+	stats = {}
+	for host, exit_status in exits.items():
+		if not exit_status in stats: stats[exit_status] = set()
+		stats[exit_status].add(host)
+	#endfor
+
+	# TODO: rename to something better
+	rets = []
+	for ret in sorted(stats.keys(), key=lambda x:-1 if x is None else x):
+		ret_str = str(ret)
+
+		if ret is None:
+			ret_str = 'unknown'
+			col = color.YELLOW
+		elif ret == 0:
+			col = color.GREEN
+		else:
+			col = color.RED
+		#endif
+
+		rets.append(' %s%s: %d' % (col, ret_str, len(stats[ret])))
+	#endfor
+
+	print('rets: %s%s' % (', '.join(rets), color.END))
+#enddef
+
+
 # TODO: find a better name
 def do_it(cmds, nprocs, retry_on):
 	hosts_to_go = sorted(list(cmds.keys()))
@@ -309,18 +366,12 @@ def do_it(cmds, nprocs, retry_on):
 			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
 
-			print('%s(%d/%d) %s%s%s' % (color.CYAN, len(hosts_to_go), total, color.BOLD, cmd, color.END))
-			exit_status = subprocess.call(cmd, shell=True)
+			print_start(cmd, hosts_to_go, total)
 
+			exit_status = subprocess.call(cmd, shell=True)
 			exits[host] = exit_status
 
-			if exit_status == 0:
-				col = color.GREEN
-			else:
-				col = color.RED
-			#endif
-
-			print('%s(%d/%d) %s -> %s%s' % (col, len(exits), total, cmd, exit_status, color.END))
+			print_done(cmd, exit_status, exits, total)
 
 			if exit_status in retry_on:
 				# return back to queue
@@ -347,7 +398,7 @@ def do_it(cmds, nprocs, retry_on):
 
 				running[w_id] = (host, cmd)
 
-				print('%s(%d/%d) (%s) %s%s%s' % (color.CYAN, len(hosts_to_go), total, w_id, color.BOLD, cmd, color.END))
+				print_start(cmd, hosts_to_go, total, w_id)
 
 				'''
 				if args['--interactive']:
@@ -378,20 +429,9 @@ def do_it(cmds, nprocs, retry_on):
 
 				host, cmd = running[w_id]
 
-				exit_status_str = exit_status
-
 				exits[host] = exit_status
 
-				if exit_status is None:
-					col = color.YELLOW
-					exit_status_str = 'unknown'  # TODO: not very nice
-				elif exit_status == 0:
-					col = color.GREEN
-				else:
-					col = color.RED
-				#endif
-
-				print('%s(%d/%d) (%s) %s -> %s%s' % (col, len(exits), total, w_id, cmd, exit_status_str, color.END))
+				print_done(cmd, exit_status, exits, total, w_id)
 
 				del running[w_id]
 
@@ -406,23 +446,13 @@ def do_it(cmds, nprocs, retry_on):
 
 				print('%s not in statuses?!? wtf!!!' % w_id)
 				exit_status = None
-				exit_status_str = exit_status
 
 				# TODO: this is cut-n-pasted from above. unite!
 				host, cmd = running[w_id]
 
 				exits[host] = exit_status
 
-				if exit_status is None:
-					col = color.YELLOW
-					exit_status_str = 'unknown'  # TODO: not very nice
-				elif exit_status == 0:
-					col = color.GREEN
-				else:
-					col = color.RED
-				#endif
-
-				print('%s(%d/%d) (%s) %s -> %s%s' % (col, len(exits), total, w_id, cmd, exit_status_str, color.END))
+				print_done(cmd, exit_status, exits, total, w_id)
 
 				del running[w_id]
 
@@ -438,31 +468,7 @@ def do_it(cmds, nprocs, retry_on):
 		#endwhile
 	#endif
 
-	# TODO: rename to something better
-	stats = {}
-	for host, exit_status in exits.items():
-		if not exit_status in stats: stats[exit_status] = set()
-		stats[exit_status].add(host)
-	#endfor
-
-	# TODO: rename to something better
-	rets = []
-	for ret in sorted(stats.keys(), key=lambda x:-1 if x is None else x):
-		ret_str = str(ret)
-
-		if ret is None:
-			ret_str = 'unknown'
-			col = color.YELLOW
-		elif ret == 0:
-			col = color.GREEN
-		else:
-			col = color.RED
-		#endif
-
-		rets.append(' %s%s: %d' % (col, ret_str, len(stats[ret])))
-	#endfor
-
-	print('rets: %s%s' % (', '.join(rets), color.END))
+	print_stats(exits)
 #enddef
 
 
