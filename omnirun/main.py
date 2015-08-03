@@ -38,6 +38,7 @@ import docopt
 import os
 import time
 import subprocess
+import signal
 from omnirun.tmux import *
 
 
@@ -45,6 +46,10 @@ TMUX = '/usr/bin/tmux'
 SSHPASS = '/usr/bin/sshpass'
 MAX_FORKS = 10
 DEBUG = 0
+
+# TODO: can you solve this without globals?
+original_sigint_handler = None
+exit_requested = False
 
 
 class color:
@@ -59,6 +64,18 @@ class color:
 	UNDERLINE = '\033[4m'
 	END = '\033[0m'
 #endclass
+
+
+def sigint_handler(signum, frame):
+	print()
+	print('%sinterrupt signal caught, exitting gracefully. interrupt once more for hard exit.%s' % (color.BOLD, color.END))
+	print()
+
+	signal.signal(signal.SIGINT, original_sigint_handler)
+
+	global exit_requested
+	exit_requested = True
+#enddef
 
 
 def get_hosts(fn):
@@ -163,6 +180,10 @@ def rc_parse(s):
 
 
 def main():
+	global original_sigint_handler
+	original_sigint_handler = signal.getsignal(signal.SIGINT)
+	signal.signal(signal.SIGINT, sigint_handler)
+
 	args = docopt.docopt(__doc__, version=__version__)
 
 	if args['-H']:
@@ -362,7 +383,7 @@ def do_it(cmds, nprocs, retry_on):
 	exits = {}
 
 	if nprocs == 1:
-		while hosts_to_go:
+		while not exit_requested and hosts_to_go:
 			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
 
@@ -381,7 +402,7 @@ def do_it(cmds, nprocs, retry_on):
 	else:
 		running = {}
 		while 1:
-			while len(running) < nprocs and hosts_to_go:
+			while not exit_requested and len(running) < nprocs and hosts_to_go:
 				host = hosts_to_go.pop(0)
 				cmd = cmds[host]
 
