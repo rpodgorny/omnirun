@@ -296,6 +296,7 @@ def main():
 		cmds[host] = cmd
 	#endfor
 
+	interactive = args['--interactive']
 	keep_open = rc_parse(args['--keep-open'])
 	retry_on = rc_parse(args['--retry-on'])
 
@@ -315,7 +316,7 @@ def main():
 		nprocs = 1
 	#endif
 
-	do_it(cmds, nprocs, retry_on)
+	do_it(cmds, nprocs, interactive, retry_on)
 #enddef
 
 
@@ -377,7 +378,7 @@ def print_stats(exits):
 
 
 # TODO: find a better name
-def do_it(cmds, nprocs, retry_on):
+def do_it(cmds, nprocs, interactive, retry_on):
 	hosts_to_go = sorted(list(cmds.keys()))
 	total = len(hosts_to_go)
 	exits = {}
@@ -406,7 +407,7 @@ def do_it(cmds, nprocs, retry_on):
 				host = hosts_to_go.pop(0)
 				cmd = cmds[host]
 
-				if args['--interactive']:
+				if interactive:
 					w_id = tmux_new_window(host)
 					tmux_send_keys(w_id, cmd)
 				else:
@@ -422,7 +423,7 @@ def do_it(cmds, nprocs, retry_on):
 				print_start(cmd, hosts_to_go, total, w_id)
 
 				'''
-				if args['--interactive']:
+				if interactive:
 					tmux_send_keys(w_id, cmd)
 				else:
 					tmux_respawn_pane(w_id, cmd)
