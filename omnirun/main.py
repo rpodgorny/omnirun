@@ -445,6 +445,7 @@ def do_it(cmds, nprocs, interactive, keep_open, retry_on):
 
 				# TODO: don't kill the window if it's currently open?
 				if exit_status not in keep_open:
+					tmux_set_window_option(w_id, 'set-remain-on-exit', 'off')
 					tmux_kill_window(w_id)
 				#endif
 
