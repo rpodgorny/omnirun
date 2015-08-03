@@ -439,38 +439,22 @@ def do_it(cmds, nprocs, interactive, keep_open, retry_on):
 
 			statuses = tmux_window_statuses()
 
-			for w_id, (is_dead, exit_status) in statuses.items():
-				if not w_id in running: continue
+			for w_id, (host, cmd) in running.copy().items():
+				if w_id in statuses:
+					is_dead, exit_status = statuses[w_id]
+
+					# TODO: don't kill the window if it's currently open?
+					if is_dead and exit_status not in keep_open:
+						#tmux_set_window_option(w_id, 'set-remain-on-exit', 'off')
+						tmux_kill_window(w_id)
+					#endif
+				else:
+					print('%s not in statuses?!? wtf!!!' % w_id)
+					is_dead = True
+					exit_status = None
+				#endif
+
 				if not is_dead: continue
-
-				# TODO: don't kill the window if it's currently open?
-				if exit_status not in keep_open:
-					tmux_set_window_option(w_id, 'set-remain-on-exit', 'off')
-					tmux_kill_window(w_id)
-				#endif
-
-				host, cmd = running[w_id]
-
-				exits[host] = exit_status
-
-				print_done(cmd, exit_status, exits, total, w_id)
-
-				del running[w_id]
-
-				if exit_status in retry_on:
-					# return to queue
-					hosts_to_go.append(host)
-				#endif
-			#endfor
-
-			for w_id in running.copy():
-				if w_id in statuses: continue
-
-				print('%s not in statuses?!? wtf!!!' % w_id)
-				exit_status = None
-
-				# TODO: this is cut-n-pasted from above. unite!
-				host, cmd = running[w_id]
 
 				exits[host] = exit_status
 
