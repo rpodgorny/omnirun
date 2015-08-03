@@ -42,7 +42,6 @@ import signal
 from omnirun.tmux import *
 
 
-TMUX = '/usr/bin/tmux'
 SSHPASS = '/usr/bin/sshpass'
 MAX_FORKS = 10
 DEBUG = 0
@@ -316,7 +315,7 @@ def main():
 		nprocs = 1
 	#endif
 
-	do_it(cmds, nprocs, interactive, retry_on)
+	do_it(cmds, nprocs, interactive, keep_open, retry_on)
 #enddef
 
 
@@ -324,7 +323,7 @@ def print_start(cmd, hosts_to_go, total, window_id=None):
 	if window_id is None:
 		print('%s%s%s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, cmd, color.END, len(hosts_to_go), total, color.END))
 	else:
-		print('%s%s%s%s (%s) (%d of %d to go)%s' % (color.CYAN, color.BOLD, cmd, window_id, color.END, len(hosts_to_go), total, color.END))
+		print('%s%s%s (%s)%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, cmd, window_id, color.END, len(hosts_to_go), total, color.END))
 	#endif
 #enddef
 
@@ -378,7 +377,7 @@ def print_stats(exits):
 
 
 # TODO: find a better name
-def do_it(cmds, nprocs, interactive, retry_on):
+def do_it(cmds, nprocs, interactive, keep_open, retry_on):
 	hosts_to_go = sorted(list(cmds.keys()))
 	total = len(hosts_to_go)
 	exits = {}
@@ -484,7 +483,7 @@ def do_it(cmds, nprocs, interactive, retry_on):
 				#endif
 			#endfor
 
-			if not running and not hosts_to_go: break
+			if not running: break
 
 			time.sleep(1)
 		#endwhile

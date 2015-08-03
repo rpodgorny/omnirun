@@ -1,6 +1,9 @@
 import subprocess
 
 
+TMUX = '/usr/bin/tmux'
+
+
 def tmux_window_statuses():
 	ret = {}
 
