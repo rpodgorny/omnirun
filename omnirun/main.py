@@ -254,9 +254,12 @@ def main():
 		#endif
 
 		if args['--copy-keys']:
+			command_to_display = '<ssh-copy-id>'
 			#cmd = 'ssh-copy-id -i %s %s' % (PUB_KEY_FN, host_full)
 			cmd = 'ssh-copy-id %s' % (host_full, )
 		elif args['<script>']:
+			command_to_display = '<script> %s' % args['<script>']
+
 			if args['--sudo']:
 				sudo = 'sudo'
 			else:
@@ -279,8 +282,10 @@ def main():
 				#cmd = 'ssh %s %s "cat | %s sh"' % (sshopts, host_full, sudo)
 			#endif
 		elif args['<command>']:
+			command_to_display = args['<command>']
 			cmd = 'ssh %s %s "%s"' % (sshopts, host_full, args['<command>'].replace('"', '\\"'))
 		else:
+			command_to_display = '<login>'
 			cmd = 'ssh %s %s' % (sshopts, host_full)
 		#endif
 
@@ -315,20 +320,20 @@ def main():
 		nprocs = 1
 	#endif
 
-	do_it(cmds, nprocs, interactive, keep_open, retry_on)
+	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on)
 #enddef
 
 
-def print_start(cmd, hosts_to_go, total, window_id=None):
+def print_start(host, cmd, hosts_to_go, total, window_id=None):
 	if window_id is None:
-		print('%s%s%s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, cmd, color.END, len(hosts_to_go), total, color.END))
+		print('%s%s%s: %s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, color.END, len(hosts_to_go), total, color.END))
 	else:
-		print('%s%s%s (%s)%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, cmd, window_id, color.END, len(hosts_to_go), total, color.END))
+		print('%s%s%s: %s (%s)%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, window_id, color.END, len(hosts_to_go), total, color.END))
 	#endif
 #enddef
 
 
-def print_done(cmd, exit_status, exits, total, window_id=None):
+def print_done(host, cmd, exit_status, exits, total, window_id=None):
 	exit_status_str = exit_status
 	if exit_status is None:
 		col = color.YELLOW
@@ -340,9 +345,9 @@ def print_done(cmd, exit_status, exits, total, window_id=None):
 	#endif
 
 	if window_id is None:
-		print('%s%s -> %s%s (%d of %d done)%s' % (col, cmd, exit_status, color.END, len(exits), total, color.END))
+		print('%s%s: %s -> %s%s (%d of %d done)%s' % (col, host, cmd, exit_status, color.END, len(exits), total, color.END))
 	else:
-		print('%s%s (%s) -> %s%s (%d of %d done)%s' % (col, cmd, window_id, exit_status, color.END, len(exits), total, color.END))
+		print('%s%s: %s (%s) -> %s%s (%d of %d done)%s' % (col, host, cmd, window_id, exit_status, color.END, len(exits), total, color.END))
 	#endif
 #enddef
 
@@ -377,7 +382,7 @@ def print_stats(exits):
 
 
 # TODO: find a better name
-def do_it(cmds, nprocs, interactive, keep_open, retry_on):
+def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on):
 	hosts_to_go = sorted(list(cmds.keys()))
 	total = len(hosts_to_go)
 	exits = {}
@@ -387,12 +392,12 @@ def do_it(cmds, nprocs, interactive, keep_open, retry_on):
 			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
 
-			print_start(cmd, hosts_to_go, total)
+			print_start(host, command_to_display, hosts_to_go, total)
 
 			exit_status = subprocess.call(cmd, shell=True)
 			exits[host] = exit_status
 
-			print_done(cmd, exit_status, exits, total)
+			print_done(host, command_to_display, exit_status, exits, total)
 
 			if exit_status in retry_on:
 				# return back to queue
@@ -419,7 +424,7 @@ def do_it(cmds, nprocs, interactive, keep_open, retry_on):
 
 				running[w_id] = (host, cmd)
 
-				print_start(cmd, hosts_to_go, total, w_id)
+				print_start(host, command_to_display, hosts_to_go, total, w_id)
 
 				'''
 				if interactive:
@@ -458,7 +463,7 @@ def do_it(cmds, nprocs, interactive, keep_open, retry_on):
 
 				exits[host] = exit_status
 
-				print_done(cmd, exit_status, exits, total, w_id)
+				print_done(host, command_to_display, exit_status, exits, total, w_id)
 
 				del running[w_id]
 
