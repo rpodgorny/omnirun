@@ -26,6 +26,7 @@ Options:
                                  Keep the window open when exit status is among the enumerated.
   --retry-on=<0,1,2,...,unknown,nonzero>
                                  Keep running the command while the exit status is among the enumerated.
+  -v, --verbose                  Be verbose (when printing final result stats).
 
 Arguments:
   <command>  Command to run.
@@ -303,6 +304,7 @@ def main():
 	interactive = args['--interactive']
 	keep_open = rc_parse(args['--keep-open'])
 	retry_on = rc_parse(args['--retry-on'])
+	verbose = args['--verbose']
 
 	try:
 		nprocs = int(args['-p'])
@@ -320,7 +322,7 @@ def main():
 		nprocs = 1
 	#endif
 
-	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on)
+	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, verbose)
 #enddef
 
 
@@ -352,7 +354,7 @@ def print_done(host, cmd, exit_status, exits, total, window_id=None):
 #enddef
 
 
-def print_stats(exits):
+def print_stats(exits, verbose):
 	# TODO: rename to something better
 	stats = {}
 	for host, exit_status in exits.items():
@@ -374,15 +376,22 @@ def print_stats(exits):
 			col = color.RED
 		#endif
 
-		rets.append(' %s%s: %d' % (col, ret_str, len(stats[ret])))
+		s = '%s%s: %d' % (col, ret_str, len(stats[ret]))
+		if verbose and len(stats[ret]): s += ' (%s)' % ', '.join(sorted(list(stats[ret])))
+
+		rets.append(s)
 	#endfor
 
-	print('rets: %s%s' % (', '.join(rets), color.END))
+	if verbose:
+		print('rets:\n%s%s' % ('\n'.join(rets), color.END))
+	else:
+		print('rets: %s%s' % (', '.join(rets), color.END))
+	#endif
 #enddef
 
 
 # TODO: find a better name
-def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on):
+def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, verbose):
 	hosts_to_go = sorted(list(cmds.keys()))
 	total = len(hosts_to_go)
 	exits = {}
@@ -479,7 +488,8 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on):
 		#endwhile
 	#endif
 
-	print_stats(exits)
+	print()
+	print_stats(exits, verbose)
 #enddef
 
 
