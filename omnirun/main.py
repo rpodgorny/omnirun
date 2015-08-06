@@ -434,21 +434,6 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 				running[w_id] = (host, cmd)
 
 				print_start(host, command_to_display, hosts_to_go, total, w_id)
-
-				'''
-				if interactive:
-					tmux_send_keys(w_id, cmd)
-				else:
-					tmux_respawn_pane(w_id, cmd)
-
-					###if args['<script>']:
-						data = open(args['<script>'], 'r').read()
-						w.list_panes()[0].send_keys(data, enter=False)
-						#w.list_panes()[0].send_keys('$\'\\004\'', enter=False)
-						#w.list_panes()[0].tmux('send-keys', 'C-d')
-					#endif
-				#endif
-				'''
 			#endwhile
 
 			statuses = tmux_window_statuses()
