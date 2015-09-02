@@ -14,8 +14,7 @@ Options:
   -T <tag>                       Only consider hosts with <tag>.
   --user=<user>                  Username to use for the remote host.
   --pass=<pass>                  Password to use for sshpass.
-  --nshkc, --no-strict-host-key-checking
-                                 Disable ssh host key checking.
+  --no-strict-host-key-checking  Disable ssh host key checking.
   --interactive                  Interactive mode. You have to disconnect manually.
   -p <num>                       Number of parallel processes to run.
   -4                             Force connection over IPv4.
