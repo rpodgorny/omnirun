@@ -274,6 +274,12 @@ def main():
 				cmd = 'ssh {sshopts} {host_full} "mkdir {tmp_fn} && cd {tmp_fn}; wget -O {tmp_fn}/script --no-check-certificate \"{script}\" && chmod a+x script && {sudo} ./script && cd - && rm -rf {tmp_fn}"'.format( \
 				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, script=args['<script>'], sudo=sudo)
 			else:
+				# TODO: do this check outside of the loop
+				if not os.path.isfile(args['<script>']):
+					print('script \'%s\' does not exist' % args['<script>'])
+					return 1
+				#endif
+
 				cmd = 'ssh {sshopts} {host_full} "mkdir {tmp_fn} && cat >{tmp_fn}/script && cd {tmp_fn} && chmod a+x ./script && {sudo} ./script && cd - && rm -rf {tmp_fn}" <{script}'.format( \
 				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, sudo=sudo, script=args['<script>'])
 
