@@ -206,7 +206,6 @@ def main():
 
 	if args['-4']:
 		sshopts += ' -4'
-	#eendif
 
 	if args['-6']:
 		sshopts += ' -6'
@@ -267,7 +266,6 @@ def main():
 		if pass_:
 			if not os.path.isfile(SSHPASS):
 				raise Exception('%s does not exist' % SSHPASS)
-
 			cmd = '%s -p%s %s' % (SSHPASS, pass_, cmd)
 
 		cmds[host] = cmd
@@ -357,12 +355,9 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 		while not exit_requested and hosts_to_go:
 			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
-
 			print_start(host, command_to_display, hosts_to_go, total)
-
 			exit_status = subprocess.call(cmd, shell=True)
 			exits[host] = exit_status
-
 			print_done(host, command_to_display, exit_status, exits, total)
 
 			if exit_status in retry_on:
@@ -381,12 +376,10 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 				else:
 					w_id = tmux_new_window(host, cmd)
 
-				assert w_id
+				assert(w_id)
 
 				tmux_set_window_option(w_id, 'set-remain-on-exit', 'on')
-
 				running[w_id] = (host, cmd)
-
 				print_start(host, command_to_display, hosts_to_go, total, w_id)
 
 			statuses = tmux_window_statuses()
@@ -407,9 +400,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 				if not is_dead: continue
 
 				exits[host] = exit_status
-
 				print_done(host, command_to_display, exit_status, exits, total, w_id)
-
 				del running[w_id]
 
 				if exit_status in retry_on:
