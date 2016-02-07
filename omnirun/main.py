@@ -32,7 +32,7 @@ Arguments:
   <command>  Command to run.
 '''
 
-from omnirun import __version__
+from .version import __version__
 
 import sys
 import docopt
@@ -363,6 +363,10 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 			if exit_status in retry_on:
 				# return back to queue
 				hosts_to_go.append(host)
+
+			# we are only left with retries so let's just back off a little
+			if set(hosts_to_go) <= set(exits.keys()):
+				time.sleep(1)
 	else:
 		running = {}
 		while 1:
