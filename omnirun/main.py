@@ -63,7 +63,6 @@ class color:
 	BOLD = '\033[1m'
 	UNDERLINE = '\033[4m'
 	END = '\033[0m'
-#endclass
 
 
 def sigint_handler(signum, frame):
@@ -75,13 +74,11 @@ def sigint_handler(signum, frame):
 
 	global exit_requested
 	exit_requested = True
-#enddef
 
 
 def get_hosts(fn):
 	with open(fn, 'r') as f:
 		lines = f.readlines()
-	#endwith
 
 	lines_exp = []
 	for line in lines:
@@ -89,17 +86,14 @@ def get_hosts(fn):
 		if not line: continue
 		if line.startswith('#'): continue
 		lines_exp.extend(expand_host(line))
-	#endfor
 
 	ret = {}
 	for i in lines_exp:
 		host, *tags = i.split()
 		if not host in ret: ret[host] = set()
 		ret[host] |= set(tags)
-	#endfor
 
 	return ret
-#enddef
 
 
 def expand_host(s):
@@ -122,14 +116,10 @@ def expand_host(s):
 
 			for j in range(from_, to_ + 1):
 				ret.append('%s%s%s' % (pre, j, post))
-			#endfor
 		else:
 			ret.append('%s%s%s' % (pre, i, post))
-		#endif
-	#endfor
 
 	return ret
-#enddef
 
 
 def host_to_user_pass_host(s):
@@ -143,13 +133,10 @@ def host_to_user_pass_host(s):
 			user, pass_ = user_pass.split(':')
 		else:
 			user = user_pass
-		#endif
 	else:
 		host = s
-	#endif
 
 	return user, pass_, host
-#enddef
 
 
 def rc_parse(s):
@@ -162,21 +149,17 @@ def rc_parse(s):
 	if 'unknown' in rcs:
 		rcs.remove('unknown')
 		ret.add(None)
-	#endif
 
 	if 'nonzero' in rcs:
 		rcs.remove('nonzero')
 		ret |= set(range(1, 256))
-	#endif
 
 	for rc in rcs:
 		rc = rc.strip()
 		if not rc: continue
 		ret.add(int(rc))
-	#endfor
 
 	return ret
-#enddef
 
 
 def main():
@@ -192,7 +175,6 @@ def main():
 		expanded_hosts = set()
 		for host in hosts:
 			expanded_hosts |= set(expand_host(host))
-		#endfor
 
 		hosts = expanded_hosts
 	elif args['-T']:
@@ -203,18 +185,14 @@ def main():
 			hosts_from_file = get_hosts(fn)
 		else:
 			hosts_from_file = {}
-		#endif
 
 		hosts = set()
 		for host, tags in hosts_from_file.items():
 			if not tag or tag in tags:
 				hosts.add(host)
-			#endif
-		#endfor
 	else:
 		print('neither hosts nor tags specified, this does not seem right!')
 		return 1
-	#endif
 
 	sshopts = ''
 	#sshopts += ' -o ConnectTImeout=2'
@@ -222,11 +200,9 @@ def main():
 	# TODO: the -t seems to be breaking logins to windows machines - figure shomething out
 	if args['-t']:
 		sshopts += ' -t'
-	#endif
 
 	if args['--no-strict-host-key-checking']:
 		sshopts += ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
-	#endif
 
 	if args['-4']:
 		sshopts += ' -4'
@@ -234,7 +210,6 @@ def main():
 
 	if args['-6']:
 		sshopts += ' -6'
-	#endif
 
 	cmds = {}
 	for host in hosts:
@@ -242,17 +217,14 @@ def main():
 
 		if args['--user']:
 			user = args['--user']
-		#endif
 
 		if args['--pass']:
 			pass_ = args['--pass']
-		#endif
 
 		if user:
 			host_full = '%s@%s' % (user, host)
 		else:
 			host_full = host
-		#endif
 
 		if args['--copy-keys']:
 			command_to_display = '<ssh-copy-id>'
@@ -265,7 +237,6 @@ def main():
 				sudo = 'sudo'
 			else:
 				sudo = ''
-			#endif
 
 			tmp_fn = '/tmp/omnirun.%s' % int(time.time())
 
@@ -278,7 +249,6 @@ def main():
 				if not os.path.isfile(args['<script>']):
 					print('script \'%s\' does not exist' % args['<script>'])
 					return 1
-				#endif
 
 				cmd = 'ssh {sshopts} {host_full} "rm -rf {tmp_fn} && mkdir {tmp_fn} && cat >{tmp_fn}/script && cd {tmp_fn} && chmod a+x ./script && {sudo} ./script && cd - && rm -rf {tmp_fn}" <{script}'.format( \
 				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, sudo=sudo, script=args['<script>'])
@@ -287,25 +257,20 @@ def main():
 				#cmd = 'ssh %s %s \'sh -c "a=`mktemp`; cat >$a; chmod a+x $a; %s $a; rm $a"\' <%s' % (sshopts, host_full, sudo, args['<script>'])
 				#cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s"' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn)
 				#cmd = 'ssh %s %s "cat | %s sh"' % (sshopts, host_full, sudo)
-			#endif
 		elif args['<command>']:
 			command_to_display = args['<command>']
 			cmd = 'ssh %s %s "%s"' % (sshopts, host_full, args['<command>'].replace('"', '\\"'))
 		else:
 			command_to_display = '<login>'
 			cmd = 'ssh %s %s' % (sshopts, host_full)
-		#endif
 
 		if pass_:
 			if not os.path.isfile(SSHPASS):
 				raise Exception('%s does not exist' % SSHPASS)
-			#endif
 
 			cmd = '%s -p%s %s' % (SSHPASS, pass_, cmd)
-		#endif
 
 		cmds[host] = cmd
-	#endfor
 
 	interactive = args['--interactive']
 	keep_open = rc_parse(args['--keep-open'])
@@ -316,20 +281,16 @@ def main():
 		nprocs = int(args['-p'])
 	except:
 		nprocs = 1
-	#endtry
 
 	if nprocs > 1 and not os.path.isfile(TMUX):
 		print('%s%s not found, implying -p1%s' % (color.RED, TMUX, color.END))
 		nprocs = 1
-	#endif
 
 	if nprocs > 1 and len(cmds) == 1:
 		print('only one host, implying -p1')
 		nprocs = 1
-	#endif
 
 	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, verbose)
-#enddef
 
 
 def print_start(host, cmd, hosts_to_go, total, window_id=None):
@@ -337,8 +298,6 @@ def print_start(host, cmd, hosts_to_go, total, window_id=None):
 		print('%s%s%s: %s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, color.END, len(hosts_to_go), total, color.END))
 	else:
 		print('%s%s%s: %s (%s)%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, window_id, color.END, len(hosts_to_go), total, color.END))
-	#endif
-#enddef
 
 
 def print_done(host, cmd, exit_status, exits, total, window_id=None):
@@ -350,14 +309,11 @@ def print_done(host, cmd, exit_status, exits, total, window_id=None):
 		col = color.GREEN
 	else:
 		col = color.RED
-	#endif
 
 	if window_id is None:
 		print('%s%s: %s -> %s%s (%d of %d done)%s' % (col, host, cmd, exit_status, color.END, len(exits), total, color.END))
 	else:
 		print('%s%s: %s (%s) -> %s%s (%d of %d done)%s' % (col, host, cmd, window_id, exit_status, color.END, len(exits), total, color.END))
-	#endif
-#enddef
 
 
 def print_stats(exits, verbose):
@@ -366,7 +322,6 @@ def print_stats(exits, verbose):
 	for host, exit_status in exits.items():
 		if not exit_status in stats: stats[exit_status] = set()
 		stats[exit_status].add(host)
-	#endfor
 
 	# TODO: rename to something better
 	rets = []
@@ -380,20 +335,16 @@ def print_stats(exits, verbose):
 			col = color.GREEN
 		else:
 			col = color.RED
-		#endif
 
 		s = '%s%s: %d' % (col, ret_str, len(stats[ret]))
 		if verbose and len(stats[ret]): s += ' (%s)' % ', '.join(sorted(list(stats[ret])))
 
 		rets.append(s)
-	#endfor
 
 	if verbose:
 		print('rets:\n%s%s' % ('\n'.join(rets), color.END))
 	else:
 		print('rets: %s%s' % (', '.join(rets), color.END))
-	#endif
-#enddef
 
 
 # TODO: find a better name
@@ -417,8 +368,6 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 			if exit_status in retry_on:
 				# return back to queue
 				hosts_to_go.append(host)
-			#endif
-		#endwhile
 	else:
 		running = {}
 		while 1:
@@ -431,7 +380,6 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 					tmux_send_keys(w_id, cmd)
 				else:
 					w_id = tmux_new_window(host, cmd)
-				#endif
 
 				assert w_id
 
@@ -440,7 +388,6 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 				running[w_id] = (host, cmd)
 
 				print_start(host, command_to_display, hosts_to_go, total, w_id)
-			#endwhile
 
 			statuses = tmux_window_statuses()
 
@@ -452,12 +399,10 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 					if is_dead and exit_status not in keep_open:
 						#tmux_set_window_option(w_id, 'set-remain-on-exit', 'off')
 						tmux_kill_window(w_id)
-					#endif
 				else:
 					print('%s not in statuses?!? wtf!!!' % w_id)
 					is_dead = True
 					exit_status = None
-				#endif
 
 				if not is_dead: continue
 
@@ -470,20 +415,14 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 				if exit_status in retry_on:
 					# return to queue
 					hosts_to_go.append(host)
-				#endif
-			#endfor
 
 			if not running: break
 
 			time.sleep(1)
-		#endwhile
-	#endif
 
 	print()
 	print_stats(exits, verbose)
-#enddef
 
 
 if __name__ == '__main__':
 	sys.exit(main())
-#enddef
