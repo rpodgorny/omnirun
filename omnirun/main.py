@@ -67,7 +67,7 @@ class color:
 
 def sigint_handler(signum, frame):
 	print()
-	print('%sinterrupt signal caught, exitting gracefully. interrupt once more for hard exit.%s' % (color.BOLD, color.END))
+	print('%sinterrupt signal caught, exiting gracefully. interrupt once more for hard exit.%s' % (color.BOLD, color.END))
 	print()
 
 	signal.signal(signal.SIGINT, original_sigint_handler)
