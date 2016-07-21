@@ -328,7 +328,8 @@ def print_stats(exits, verbose):
 	# TODO: rename to something better
 	stats = {}
 	for host, exit_status in exits.items():
-		if not exit_status in stats: stats[exit_status] = set()
+		if not exit_status in stats:
+			stats[exit_status] = set()
 		stats[exit_status].add(host)
 
 	# TODO: rename to something better
@@ -345,7 +346,8 @@ def print_stats(exits, verbose):
 			col = color.RED
 
 		s = '%s%s: %d' % (col, ret_str, len(stats[ret]))
-		if verbose and len(stats[ret]): s += ' (%s)' % ', '.join(sorted(list(stats[ret])))
+		if verbose and len(stats[ret]):
+			s += ' (%s)' % ', '.join(sorted(list(stats[ret])))
 
 		rets.append(s)
 
