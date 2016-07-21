@@ -122,10 +122,11 @@ def expand_host(s):
 	return ret
 
 
-def host_to_user_pass_host(s):
+def host_to_user_pass_host_port(s):
 	user = None
 	pass_ = None
 	host = None
+	port = None
 
 	if '@' in s:
 		user_pass, host = s.split('@')
@@ -136,7 +137,11 @@ def host_to_user_pass_host(s):
 	else:
 		host = s
 
-	return user, pass_, host
+	if ':' in host:
+		host, port = host.split(':')
+		port = int(port)
+
+	return user, pass_, host, port
 
 
 def rc_parse(s):
@@ -194,25 +199,9 @@ def main():
 		print('neither hosts nor tags specified, this does not seem right!')
 		return 1
 
-	sshopts = ''
-	#sshopts += ' -o ConnectTImeout=2'
-
-	# TODO: the -t seems to be breaking logins to windows machines - figure shomething out
-	if args['-t']:
-		sshopts += ' -t'
-
-	if args['--no-strict-host-key-checking']:
-		sshopts += ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
-
-	if args['-4']:
-		sshopts += ' -4'
-
-	if args['-6']:
-		sshopts += ' -6'
-
 	cmds = {}
 	for host in hosts:
-		user, pass_, host = host_to_user_pass_host(host)
+		user, pass_, host, port = host_to_user_pass_host_port(host)
 
 		if args['--user']:
 			user = args['--user']
@@ -224,6 +213,25 @@ def main():
 			host_full = '%s@%s' % (user, host)
 		else:
 			host_full = host
+
+		sshopts = ''
+		#sshopts += ' -o ConnectTImeout=2'
+
+		# TODO: the -t seems to be breaking logins to windows machines - figure shomething out
+		if args['-t']:
+			sshopts += ' -t'
+
+		if args['--no-strict-host-key-checking']:
+			sshopts += ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+		if args['-4']:
+			sshopts += ' -4'
+
+		if args['-6']:
+			sshopts += ' -6'
+
+		if port:
+			sshopts += ' -p %d' % port
 
 		if args['--copy-keys']:
 			command_to_display = '<ssh-copy-id>'
