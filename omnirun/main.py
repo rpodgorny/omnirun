@@ -83,21 +83,25 @@ def get_hosts(fn):
 	lines_exp = []
 	for line in lines:
 		line = line.strip()
-		if not line: continue
-		if line.startswith('#'): continue
+		if not line:
+			continue
+		if line.startswith('#'):
+			continue
 		lines_exp.extend(expand_host(line))
 
 	ret = {}
 	for i in lines_exp:
 		host, *tags = i.split()
-		if not host in ret: ret[host] = set()
+		if host not in ret:
+			ret[host] = set()
 		ret[host] |= set(tags)
 
 	return ret
 
 
 def expand_host(s):
-	if not '[' in s or not '-' in s or not ']' in s: return [s, ]
+	if '[' not in s or '-' not in s or ']' not in s:
+		return [s, ]
 
 	pre = s.split('[')[0]
 	in_ = s.split('[')[1].split(']')[0]
@@ -107,7 +111,8 @@ def expand_host(s):
 
 	for i in in_.split(','):
 		i = i.strip()
-		if not i: continue
+		if not i:
+			continue
 
 		if '-' in i:
 			from_, to_ = i.split('-', 1)
@@ -145,10 +150,10 @@ def host_to_user_pass_host_port(s):
 
 
 def rc_parse(s):
+	if s is None:
+		return set()
+
 	ret = set()
-
-	if s is None: return ret
-
 	rcs = set(s.split(','))
 
 	if 'unknown' in rcs:
@@ -161,7 +166,8 @@ def rc_parse(s):
 
 	for rc in rcs:
 		rc = rc.strip()
-		if not rc: continue
+		if not rc:
+			continue
 		ret.add(int(rc))
 
 	return ret
@@ -328,13 +334,13 @@ def print_stats(exits, verbose):
 	# TODO: rename to something better
 	stats = {}
 	for host, exit_status in exits.items():
-		if not exit_status in stats:
+		if exit_status not in stats:
 			stats[exit_status] = set()
 		stats[exit_status].add(host)
 
 	# TODO: rename to something better
 	rets = []
-	for ret in sorted(stats.keys(), key=lambda x:-1 if x is None else x):
+	for ret in sorted(stats.keys(), key=lambda x: -1 if x is None else x):
 		ret_str = str(ret)
 
 		if ret is None:
@@ -413,7 +419,8 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 					is_dead = True
 					exit_status = None
 
-				if not is_dead: continue
+				if not is_dead:
+					continue
 
 				exits[host] = exit_status
 				print_done(host, command_to_display, exit_status, exits, total, w_id)
@@ -423,9 +430,10 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 					# return to queue
 					hosts_to_go.append(host)
 
-			if not running: break
+			if not running:
+				break
 
-			time.sleep(1)
+			time.sleep(1)  # TODO: hard-coded shit
 
 	print()
 	print_stats(exits, verbose)
