@@ -237,6 +237,8 @@ def main():
 			command_to_display = '<ssh-copy-id>'
 			#cmd = 'ssh-copy-id -i %s %s' % (PUB_KEY_FN, host_full)
 			cmd = 'ssh-copy-id %s' % (host_full, )
+			if port:
+				cmd += ' -p %d' % port
 		elif args['<script>']:
 			command_to_display = '<script> %s' % args['<script>']
 
