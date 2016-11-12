@@ -113,10 +113,7 @@ def expand_host(s):
 			continue
 
 		if '-' in i:
-			from_, to_ = i.split('-', 1)
-			from_ = int(from_)
-			to_ = int(to_)
-
+			from_, to_ = map(int, i.split('-', 1))
 			for j in range(from_, to_ + 1):
 				ret.append('%s%s%s' % (pre, j, post))
 		else:
@@ -126,10 +123,7 @@ def expand_host(s):
 
 
 def host_to_user_pass_host_port(s):
-	user = None
-	pass_ = None
-	host = None
-	port = None
+	user, pass_, host, port = None, None, None, None
 
 	if '@' in s:
 		user_pass, host = s.split('@')
