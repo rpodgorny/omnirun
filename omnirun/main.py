@@ -44,8 +44,6 @@ from omnirun.tmux import *
 
 
 SSHPASS = '/usr/bin/sshpass'
-MAX_FORKS = 10
-DEBUG = 0
 
 # TODO: can you solve this without globals?
 original_sigint_handler = None
