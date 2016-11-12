@@ -376,7 +376,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 
 			# we are only left with retries so let's just back off a little
 			if set(hosts_to_go) <= set(exits.keys()):
-				time.sleep(1)
+				time.sleep(1)  # TODO: hard-coded shit
 	else:
 		running = {}
 		while 1:
