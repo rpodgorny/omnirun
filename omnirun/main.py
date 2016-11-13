@@ -191,10 +191,9 @@ def main():
 		user, pass_, host, port = host_to_user_pass_host_port(hostspec)
 
 		if host.startswith('#'):
-			for hosts_ in tag_to_hosts.get(host[1:], []):
-				for h in hosts_:
-					for eh in expand_host(h):
-						hosts.add((user, pass_, eh, port))
+			for h in tag_to_hosts.get(host[1:], set()):
+				for eh in expand_host(h):
+					hosts.add((user, pass_, eh, port))
 		else:
 			for eh in expand_host(host):
 				hosts.add((user, pass_, eh, port))
