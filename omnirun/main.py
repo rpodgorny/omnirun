@@ -31,9 +31,9 @@ Arguments:
 Host specification:
   [<username>[:<password>]@]<hostname>[:<port>] where <hostname> can be:
     * plain hostname (server34.company.com)
-	* ip address (192.168.22.44)
-	* ip address with range (192.168.22.[1-57)
-	* tag - has to start with hash (#linux)
+    * ip address (192.168.22.44)
+    * ip address with range (192.168.22.[1-57)
+    * tag - has to start with hash (#linux)
 '''
 
 from .version import __version__
