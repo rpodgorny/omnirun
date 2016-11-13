@@ -4,16 +4,12 @@
 Omnirun. Run command on multiple hosts.
 
 Usage:
-  omnirun [options]
-  omnirun [options] <command>
-  omnirun [options] [--sudo] --script <script>
-  omnirun [options] --copy-keys
+  omnirun [options] <hosts>
+  omnirun [options] <hosts> <command>
+  omnirun [options] <hosts> [--sudo] --script <script>
+  omnirun [options] <hosts> --copy-keys
 
 Options:
-  -H <host1,host2,...>           Comma sparated list of hosts to connect to.
-  -T <tag>                       Only consider hosts with <tag>.
-  --user=<user>                  Username to use for the remote host.
-  --pass=<pass>                  Password to use for sshpass.
   --no-strict-host-key-checking  Disable ssh host key checking.
   --interactive                  Interactive mode. You have to disconnect manually.
   -p <num>                       Number of parallel processes to run.
@@ -29,7 +25,15 @@ Options:
   -v, --verbose                  Be verbose (when printing final result stats).
 
 Arguments:
+  <hosts>    Hosts to connect to.
   <command>  Command to run.
+
+Host specification:
+  [<username>[:<password>]@]<hostname>[:<port>] where <hostname> can be:
+    * plain hostname (server34.company.com)
+	* ip address (192.168.22.44)
+	* ip address with range (192.168.22.[1-57)
+	* tag - has to start with hash (#linux)
 '''
 
 from .version import __version__
@@ -172,45 +176,32 @@ def main():
 
 	args = docopt.docopt(__doc__, version=__version__)
 
-	if args['-H']:
-		hosts = set(args['-H'].split(','))
+	tag_to_hosts = {'all': set()}
+	fn = os.path.expanduser('~/.omnirun.conf')
+	if os.path.isfile(fn):
+		for host, tags in get_hosts(fn).items():
+			for tag in tags:
+				if tag not in tag_to_hosts:
+					tag_to_hosts[tag] = set()
+				tag_to_hosts[tag].add(host)
+				tag_to_hosts['all'].add(host)
 
-		expanded_hosts = set()
-		for host in hosts:
-			expanded_hosts |= set(expand_host(host))
+	hosts = set()
+	for hostspec in args['<hosts>'].split(','):
+		user, pass_, host, port = host_to_user_pass_host_port(hostspec)
 
-		hosts = expanded_hosts
-	elif args['-T']:
-		tag = args['-T']
-
-		fn = os.path.expanduser('~/.omnirun.conf')
-		if os.path.isfile(fn):
-			hosts_from_file = get_hosts(fn)
+		if host.startswith('#'):
+			for hosts_ in tag_to_hosts.get(host[1:], []):
+				for h in hosts_:
+					for eh in expand_host(h):
+						hosts.add((user, pass_, eh, port))
 		else:
-			hosts_from_file = {}
-
-		hosts = set()
-		for host, tags in hosts_from_file.items():
-			if not tag or tag in tags:
-				hosts.add(host)
-	else:
-		print('neither hosts nor tags specified, this does not seem right!')
-		return 1
+			for eh in expand_host(host):
+				hosts.add((user, pass_, eh, port))
 
 	cmds = {}
-	for host in hosts:
-		user, pass_, host, port = host_to_user_pass_host_port(host)
-
-		if args['--user']:
-			user = args['--user']
-
-		if args['--pass']:
-			pass_ = args['--pass']
-
-		if user:
-			host_full = '%s@%s' % (user, host)
-		else:
-			host_full = host
+	for (user, pass_, host, port) in hosts:
+		host_full = '%s@%s' % (user, host) if user else host
 
 		sshopts = ''
 		#sshopts += ' -o ConnectTImeout=2'
