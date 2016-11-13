@@ -205,36 +205,21 @@ def main():
 
 		sshopts = ''
 		#sshopts += ' -o ConnectTImeout=2'
-
-		# TODO: the -t seems to be breaking logins to windows machines - figure shomething out
-		if args['-t']:
-			sshopts += ' -t'
-
-		if args['--no-strict-host-key-checking']:
-			sshopts += ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
-
-		if args['-4']:
-			sshopts += ' -4'
-
-		if args['-6']:
-			sshopts += ' -6'
-
-		if port:
-			sshopts += ' -p %d' % port
+		sshopts += ' -t' if args['-t'] else ''  # TODO: the -t seems to be breaking logins to windows machines - figure shomething out
+		sshopts += ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' if args['--no-strict-host-key-checking'] else ''
+		sshopts += ' -4' if args['-4'] else ''
+		sshopts += ' -6' if args['-6'] else ''
+		sshopts += ' -p %d' % port if port else ''
 
 		if args['--copy-keys']:
 			command_to_display = '<ssh-copy-id>'
 			#cmd = 'ssh-copy-id -i %s %s' % (PUB_KEY_FN, host_full)
 			cmd = 'ssh-copy-id %s' % (host_full, )
-			if port:
-				cmd += ' -p %d' % port
+			cmd += ' -p %d' % port if port else ''
 		elif args['<script>']:
 			command_to_display = '<script> %s' % args['<script>']
 
-			if args['--sudo']:
-				sudo = 'sudo'
-			else:
-				sudo = ''
+			sudo = args.get('--sudo', '')
 
 			tmp_fn = '/tmp/omnirun.%s' % int(time.time())
 
