@@ -179,7 +179,7 @@ def main():
 	tag_to_hosts = {'all': set()}
 	fn = os.path.expanduser('~/.omnirun.conf')
 	if os.path.isfile(fn):
-		for host, tags in get_hosts(fn).items():
+		for hostspec, tags in get_hosts(fn).items():
 			for tag in tags:
 				if tag not in tag_to_hosts:
 					tag_to_hosts[tag] = set()
@@ -201,8 +201,17 @@ def main():
 				for eh in expand_host(ho_):
 					hosts.add((us_, pa_, eh, po_))
 		else:
-			for eh in expand_host(host):
-				hosts.add((user, pass_, eh, port))
+			for h in expand_host(host_or_tag):
+				hosts.add((user, pass_, h, port))
+
+	if args['--copy-keys']:
+		command_to_display = '<ssh-copy-id>'
+	elif args['<script>']:
+		command_to_display = '<script> %s' % args['<script>']
+	elif args['<command>']:
+		command_to_display = args['<command>']
+	else:
+		command_to_display = '<login>'
 
 	cmds = {}
 	for (user, pass_, host, port) in hosts:
@@ -217,19 +226,15 @@ def main():
 		sshopts += ' -p %d' % port if port else ''
 
 		if args['--copy-keys']:
-			command_to_display = '<ssh-copy-id>'
 			#cmd = 'ssh-copy-id -i %s %s' % (PUB_KEY_FN, host_full)
-			cmd = 'ssh-copy-id %s' % (host_full, )
+			cmd = 'ssh-copy-id %s' % host_full
 			cmd += ' -p %d' % port if port else ''
 		elif args['<script>']:
-			command_to_display = '<script> %s' % args['<script>']
-
 			sudo = args.get('--sudo', '')
 
 			tmp_fn = '/tmp/omnirun.%s' % int(time.time())
 
-			if args['<script>'].startswith('http://') \
-			or args['<script>'].startswith('https://'):
+			if args['<script>'].startswith(('http://', 'https://')):
 				cmd = 'ssh {sshopts} {host_full} "rm -rf {tmp_fn} && mkdir {tmp_fn} && cd {tmp_fn}; wget -O {tmp_fn}/script --no-check-certificate \"{script}\" && chmod a+x script && {sudo} ./script && cd - && rm -rf {tmp_fn}"'.format( \
 				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, script=args['<script>'], sudo=sudo)
 			else:
@@ -246,10 +251,8 @@ def main():
 				#cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s"' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn)
 				#cmd = 'ssh %s %s "cat | %s sh"' % (sshopts, host_full, sudo)
 		elif args['<command>']:
-			command_to_display = args['<command>']
 			cmd = 'ssh %s %s "%s"' % (sshopts, host_full, args['<command>'].replace('"', '\\"'))
 		else:
-			command_to_display = '<login>'
 			cmd = 'ssh %s %s' % (sshopts, host_full)
 
 		if pass_:
@@ -257,7 +260,7 @@ def main():
 				raise Exception('%s does not exist' % SSHPASS)
 			cmd = '%s -p%s %s' % (SSHPASS, pass_, cmd)
 
-		cmds[host] = cmd
+		cmds[host_full] = cmd
 
 	interactive = args['--interactive']
 	keep_open = rc_parse(args['--keep-open'])
@@ -276,6 +279,10 @@ def main():
 	if nprocs > 1 and len(cmds) == 1:
 		print('only one host, implying -p1')
 		nprocs = 1
+
+	if not cmds:
+		print('no hosts')
+		return 1
 
 	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, verbose)
 
