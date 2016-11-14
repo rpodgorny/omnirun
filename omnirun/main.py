@@ -126,7 +126,7 @@ def expand_host(s):
 	return ret
 
 
-def host_to_user_pass_host_port(s):
+def hostspec_to_user_pass_host_port(s):
 	user, pass_, host, port = None, None, None, None
 
 	if '@' in s:
@@ -142,7 +142,7 @@ def host_to_user_pass_host_port(s):
 		host, port = host.split(':')
 		port = int(port)
 
-	return user, pass_, host, port
+	return (user, pass_, host, port)
 
 
 def rc_parse(s):
@@ -183,17 +183,23 @@ def main():
 			for tag in tags:
 				if tag not in tag_to_hosts:
 					tag_to_hosts[tag] = set()
-				tag_to_hosts[tag].add(host)
-				tag_to_hosts['all'].add(host)
+				tag_to_hosts[tag].add(hostspec_to_user_pass_host_port(hostspec))
+				tag_to_hosts['all'].add(hostspec_to_user_pass_host_port(hostspec))
 
 	hosts = set()
 	for hostspec in args['<hosts>'].split(','):
-		user, pass_, host, port = host_to_user_pass_host_port(hostspec)
+		user, pass_, host_or_tag, port = hostspec_to_user_pass_host_port(hostspec)
 
-		if host.startswith('#'):
-			for h in tag_to_hosts.get(host[1:], set()):
-				for eh in expand_host(h):
-					hosts.add((user, pass_, eh, port))
+		if host_or_tag.startswith('#'):
+			for us_, pa_, ho_, po_ in tag_to_hosts.get(host_or_tag[1:], set()):
+				if user:
+					us_ = user
+				if pass_:
+					pa_ = pass_
+				if port:
+					po_ = port
+				for eh in expand_host(ho_):
+					hosts.add((us_, pa_, eh, po_))
 		else:
 			for eh in expand_host(host):
 				hosts.add((user, pass_, eh, port))
