@@ -22,7 +22,7 @@ Options:
                                  Keep the window open when exit status is among the enumerated.
   --retry-on=<0,1,2,...,unknown,nonzero>
                                  Keep running the command while the exit status is among the enumerated.
-  -v, --verbose                  Be verbose (when printing final result stats).
+  --terse                        Be terse when printing final result stats.
 
 Arguments:
   <hosts>    Hosts to connect to.
@@ -265,7 +265,7 @@ def main():
 	interactive = args['--interactive']
 	keep_open = rc_parse(args['--keep-open'])
 	retry_on = rc_parse(args['--retry-on'])
-	verbose = args['--verbose']
+	terse = args['--terse']
 
 	try:
 		nprocs = int(args['-p'])
@@ -284,7 +284,7 @@ def main():
 		print('no hosts')
 		return 1
 
-	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, verbose)
+	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, terse)
 
 
 def print_start(host, cmd, hosts_to_go, total, window_id=None):
@@ -310,7 +310,7 @@ def print_done(host, cmd, exit_status, exits, total, window_id=None):
 		print('%s%s: %s (%s) -> %s%s (%d of %d done)%s' % (col, host, cmd, window_id, exit_status, color.END, len(exits), total, color.END))
 
 
-def print_stats(exits, verbose):
+def print_stats(exits, terse):
 	# TODO: rename to something better
 	stats = {}
 	for host, exit_status in exits.items():
@@ -332,19 +332,18 @@ def print_stats(exits, verbose):
 			col = color.RED
 
 		s = '%s%s: %d' % (col, ret_str, len(stats[ret]))
-		if verbose and len(stats[ret]):
+		if not terse and len(stats[ret]):
 			s += ' (%s)' % ', '.join(sorted(list(stats[ret])))
-
 		rets.append(s)
 
-	if verbose:
+	if not terse:
 		print('rets:\n%s%s' % ('\n'.join(rets), color.END))
 	else:
 		print('rets: %s%s' % (', '.join(rets), color.END))
 
 
 # TODO: find a better name
-def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, verbose):
+def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, terse):
 	hosts_to_go = sorted(list(cmds.keys()))
 	total = len(hosts_to_go)
 	exits = {}
@@ -416,7 +415,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, ve
 			time.sleep(1)  # TODO: hard-coded shit
 
 	print()
-	print_stats(exits, verbose)
+	print_stats(exits, terse)
 
 
 if __name__ == '__main__':
