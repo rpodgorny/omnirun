@@ -36,7 +36,11 @@ def tmux_new_window(name, cmd=None):
 
 
 def tmux_kill_window(w_id):
-	res = subprocess.check_call([TMUX, 'kill-window', '-t', ':%s' % w_id], universal_newlines=True)
+	# TODO: this has crashed for me once so i added the try/except. maybe i should solve it elswehere, too.
+	try:
+		res = subprocess.check_call([TMUX, 'kill-window', '-t', ':%s' % w_id], universal_newlines=True)
+	except:
+		res = None
 
 
 def tmux_send_keys(w_id, cmd, enter=True):
