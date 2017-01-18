@@ -22,6 +22,7 @@ Options:
                                  Keep the window open when exit status is among the enumerated.
   --retry-on=<0,1,2,...,unknown,nonzero>
                                  Keep running the command while the exit status is among the enumerated.
+  --retries=<n>                  Number of retries in retry mode.
   --terse                        Be terse when printing final result stats.
 
 Arguments:
@@ -44,7 +45,7 @@ import os
 import time
 import subprocess
 import signal
-from omnirun.tmux import *
+import omnirun.tmux as tmux
 
 
 SSHPASS = '/usr/bin/sshpass'
@@ -265,6 +266,7 @@ def main():
 	interactive = args['--interactive']
 	keep_open = rc_parse(args['--keep-open'])
 	retry_on = rc_parse(args['--retry-on'])
+	retries = int(args['--retries']) if args['--retries'] else None
 	terse = args['--terse']
 
 	try:
@@ -272,8 +274,8 @@ def main():
 	except:
 		nprocs = 1
 
-	if nprocs > 1 and not os.path.isfile(TMUX):
-		print('%s%s not found, implying -p1%s' % (color.RED, TMUX, color.END))
+	if nprocs > 1 and not os.path.isfile(tmux.TMUX):
+		print('%s%s not found, implying -p1%s' % (color.RED, tmux.TMUX, color.END))
 		nprocs = 1
 
 	if nprocs > 1 and len(cmds) == 1:
@@ -284,14 +286,15 @@ def main():
 		print('no hosts')
 		return 1
 
-	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, terse)
+	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, retries, terse)
 
 
-def print_start(host, cmd, hosts_to_go, total, window_id=None):
+def print_start(host, cmd, hosts_to_go, total, retry_counts, retries, window_id=None):
+	retry_s = ' (retry %d/%d)' % (retry_counts[host], retries) if retries else ''
 	if window_id is None:
-		print('%s%s%s: %s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, color.END, len(hosts_to_go), total, color.END))
+		print('%s%s%s: %s%s (%d of %d to go) %s%s' % (color.CYAN, color.BOLD, host, cmd, color.END, len(hosts_to_go), total, retry_s, color.END))
 	else:
-		print('%s%s%s: %s (%s)%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, window_id, color.END, len(hosts_to_go), total, color.END))
+		print('%s%s%s: %s (%s)%s (%d of %d to go) %s%s' % (color.CYAN, color.BOLD, host, cmd, window_id, color.END, len(hosts_to_go), total, retry_s, color.END))
 
 
 def print_done(host, cmd, exit_status, exits, total, window_id=None):
@@ -343,23 +346,25 @@ def print_stats(exits, terse):
 
 
 # TODO: find a better name
-def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, terse):
+def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, retries, terse):
 	hosts_to_go = sorted(list(cmds.keys()))
 	total = len(hosts_to_go)
 	exits = {}
+	retry_counts = {k: -1 for k in hosts_to_go}  # TODO: i don't like this. fill the dict as we go...
 
 	if nprocs == 1:
 		while not exit_requested and hosts_to_go:
 			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
-			print_start(host, command_to_display, hosts_to_go, total)
+			retry_counts[host] += 1
+			print_start(host, command_to_display, hosts_to_go, total, retry_counts, retries)
 			exit_status = subprocess.call(cmd, shell=True)
 			exits[host] = exit_status
 			print_done(host, command_to_display, exit_status, exits, total)
 
 			if exit_status in retry_on:
-				# return back to queue
-				hosts_to_go.append(host)
+				if retries and retry_counts[host] < retries:
+					hosts_to_go.append(host)  # return back to queue
 
 			# we are only left with retries so let's just back off a little
 			if set(hosts_to_go) <= set(exits.keys()):
@@ -370,20 +375,21 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, te
 			while not exit_requested and len(running) < nprocs and hosts_to_go:
 				host = hosts_to_go.pop(0)
 				cmd = cmds[host]
+				retry_counts[host] += 1
 
 				if interactive:
-					w_id = tmux_new_window(host)
-					tmux_send_keys(w_id, cmd)
+					w_id = tmux.tmux_new_window(host)
+					tmux.tmux_send_keys(w_id, cmd)
 				else:
-					w_id = tmux_new_window(host, cmd)
+					w_id = tmux.tmux_new_window(host, cmd)
 
 				assert(w_id)
 
-				tmux_set_window_option(w_id, 'set-remain-on-exit', 'on')
+				tmux.tmux_set_window_option(w_id, 'set-remain-on-exit', 'on')
 				running[w_id] = (host, cmd)
-				print_start(host, command_to_display, hosts_to_go, total, w_id)
+				print_start(host, command_to_display, hosts_to_go, total, retry_counts, retries, w_id)
 
-			statuses = tmux_window_statuses()
+			statuses = tmux.tmux_window_statuses()
 
 			for w_id, (host, cmd) in running.copy().items():
 				if w_id in statuses:
@@ -392,7 +398,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, te
 					# TODO: don't kill the window if it's currently open?
 					if is_dead and exit_status not in keep_open:
 						#tmux_set_window_option(w_id, 'set-remain-on-exit', 'off')
-						tmux_kill_window(w_id)
+						tmux.tmux_kill_window(w_id)
 				else:
 					print('%s not in statuses?!? wtf!!!' % w_id)
 					is_dead = True
@@ -406,8 +412,8 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, te
 				del running[w_id]
 
 				if exit_status in retry_on:
-					# return to queue
-					hosts_to_go.append(host)
+					if retries and retry_counts[host] < retries:
+						hosts_to_go.append(host)  # return to queue
 
 			if not running:
 				break
