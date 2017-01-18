@@ -290,11 +290,11 @@ def main():
 
 
 def print_start(host, cmd, hosts_to_go, total, retry_counts, retries, window_id=None):
-	retry_s = ' (retry %d/%d)' % (retry_counts[host], retries) if retries else ''
+	retry_s = ' (retry %d/%d)' % (retry_counts[host], retries) if retries and retry_counts.get(host) else ''
 	if window_id is None:
-		print('%s%s%s: %s%s (%d of %d to go) %s%s' % (color.CYAN, color.BOLD, host, cmd, color.END, len(hosts_to_go), total, retry_s, color.END))
+		print('%s%s%s: %s%s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, color.END, retry_s, len(hosts_to_go), total, color.END))
 	else:
-		print('%s%s%s: %s (%s)%s (%d of %d to go) %s%s' % (color.CYAN, color.BOLD, host, cmd, window_id, color.END, len(hosts_to_go), total, retry_s, color.END))
+		print('%s%s%s: %s (%s)%s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, window_id, color.END, retry_s, len(hosts_to_go), total, color.END))
 
 
 def print_done(host, cmd, exit_status, exits, total, window_id=None):
