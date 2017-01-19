@@ -368,7 +368,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, re
 			print_done(host, command_to_display, exit_status, exits, total)
 
 			if exit_status in retry_on:
-				if retry_limit and retries[host] < retry_limit:
+				if not retry_limit or retries[host] < retry_limit:
 					hosts_to_go.append(host)  # return back to queue
 
 			# we are only left with retries so let's just back off a little
@@ -417,7 +417,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, re
 				del running[w_id]
 
 				if exit_status in retry_on:
-					if retry_limit and retries[host] < retry_limit:
+					if not retry_limit or retries[host] < retry_limit:
 						hosts_to_go.append(host)  # return to queue
 
 			if not running:
