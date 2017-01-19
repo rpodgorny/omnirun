@@ -22,7 +22,7 @@ Options:
                                  Keep the window open when exit status is among the enumerated.
   --retry-on=<0,1,2,...,unknown,nonzero>
                                  Keep running the command while the exit status is among the enumerated.
-  --retries=<n>                  Number of retries in retry mode.
+  --retry-limit=<n>              Maximum number of retries in retry mode.
   --terse                        Be terse when printing final result stats.
 
 Arguments:
@@ -266,7 +266,7 @@ def main():
 	interactive = args['--interactive']
 	keep_open = rc_parse(args['--keep-open'])
 	retry_on = rc_parse(args['--retry-on'])
-	retries = int(args['--retries']) if args['--retries'] else None
+	retry_limit = int(args['--retry-limit']) if args['--retry-limit'] else None
 	terse = args['--terse']
 
 	try:
@@ -286,12 +286,19 @@ def main():
 		print('no hosts')
 		return 1
 
-	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, retries, terse)
+	do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, retry_limit, terse)
 
 
-def print_start(host, cmd, hosts_to_go, total, retry_counts, retries, window_id=None):
+def print_start(host, cmd, hosts_to_go, total, retries, retry_limit, window_id=None):
 	window_id_s = ' (%s)' % window_id if window_id is not None else ''
-	retry_s = ' (retry %d/%d)' % (retry_counts[host], retries) if retries and retry_counts.get(host) else ''
+	if retries.get(host):
+		if retry_limit:
+			retry_s = ' (retry %d/%d)' % (retries[host], retry_limit)
+		else:
+			retry_s = ' (retry %d)' % retries[host]
+	else:
+		retry_s = ''
+
 	print('%s%s%s: %s%s%s%s (%d of %d to go)%s' % (color.CYAN, color.BOLD, host, cmd, window_id_s, color.END, retry_s, len(hosts_to_go), total, color.END))
 
 
@@ -344,24 +351,24 @@ def print_stats(exits, terse):
 
 
 # TODO: find a better name
-def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, retries, terse):
+def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, retry_limit, terse):
 	hosts_to_go = sorted(list(cmds.keys()))
 	total = len(hosts_to_go)
 	exits = {}
-	retry_counts = {k: -1 for k in hosts_to_go}  # TODO: i don't like this. fill the dict as we go...
+	retries = {k: -1 for k in hosts_to_go}  # TODO: i don't like this. fill the dict as we go...
 
 	if nprocs == 1:
 		while not exit_requested and hosts_to_go:
 			host = hosts_to_go.pop(0)
 			cmd = cmds[host]
-			retry_counts[host] += 1
-			print_start(host, command_to_display, hosts_to_go, total, retry_counts, retries)
+			retries[host] += 1
+			print_start(host, command_to_display, hosts_to_go, total, retries, retry_limit)
 			exit_status = subprocess.call(cmd, shell=True)
 			exits[host] = exit_status
 			print_done(host, command_to_display, exit_status, exits, total)
 
 			if exit_status in retry_on:
-				if retries and retry_counts[host] < retries:
+				if retry_limit and retries[host] < retry_limit:
 					hosts_to_go.append(host)  # return back to queue
 
 			# we are only left with retries so let's just back off a little
@@ -373,7 +380,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, re
 			while not exit_requested and len(running) < nprocs and hosts_to_go:
 				host = hosts_to_go.pop(0)
 				cmd = cmds[host]
-				retry_counts[host] += 1
+				retries[host] += 1
 
 				if interactive:
 					w_id = tmux.tmux_new_window(host)
@@ -385,7 +392,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, re
 
 				tmux.tmux_set_window_option(w_id, 'set-remain-on-exit', 'on')
 				running[w_id] = (host, cmd)
-				print_start(host, command_to_display, hosts_to_go, total, retry_counts, retries, w_id)
+				print_start(host, command_to_display, hosts_to_go, total, retries, retry_limit, w_id)
 
 			statuses = tmux.tmux_window_statuses()
 
@@ -410,7 +417,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, re
 				del running[w_id]
 
 				if exit_status in retry_on:
-					if retries and retry_counts[host] < retries:
+					if retry_limit and retries[host] < retry_limit:
 						hosts_to_go.append(host)  # return to queue
 
 			if not running:
