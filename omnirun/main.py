@@ -266,6 +266,10 @@ def main():
 		print('only one host, implying -p1')
 		nprocs = 1
 
+	if nprocs > 1 and 'TMUX' not in os.environ:
+		print('TMUX environment not set, implying -p1')
+		nprocs = 1
+
 	if not cmds:
 		print('no hosts')
 		return 1
