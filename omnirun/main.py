@@ -82,7 +82,6 @@ def sigint_handler(signum, frame):
 def get_hosts(fn):
 	with open(fn, 'r') as f:
 		lines = f.readlines()
-
 	lines_exp = []
 	for line in lines:
 		line = line.strip()
@@ -91,45 +90,37 @@ def get_hosts(fn):
 		if line.startswith('#'):
 			continue
 		lines_exp.extend(expand_host(line))
-
 	ret = {}
 	for i in lines_exp:
 		host, *tags = i.split()
 		if host not in ret:
 			ret[host] = set()
 		ret[host] |= set(tags)
-
 	return ret
 
 
 def expand_host(s):
 	if '[' not in s or '-' not in s or ']' not in s:
 		return [s, ]
-
 	pre = s.split('[')[0]
 	in_ = s.split('[')[1].split(']')[0]
 	post = s.split(']')[1]
-
 	ret = []
-
 	for i in in_.split(','):
 		i = i.strip()
 		if not i:
 			continue
-
 		if '-' in i:
 			from_, to_ = map(int, i.split('-', 1))
 			for j in range(from_, to_ + 1):
 				ret.append('%s%s%s' % (pre, j, post))
 		else:
 			ret.append('%s%s%s' % (pre, i, post))
-
 	return ret
 
 
 def hostspec_to_user_pass_host_port(s):
 	user, pass_, host, port = None, None, None, None
-
 	if '@' in s:
 		user_pass, host = s.split('@')
 		if ':' in user_pass:
@@ -138,35 +129,28 @@ def hostspec_to_user_pass_host_port(s):
 			user = user_pass
 	else:
 		host = s
-
 	if ':' in host:
 		host, port = host.split(':')
 		port = int(port)
-
 	return (user, pass_, host, port)
 
 
 def rc_parse(s):
 	if s is None:
 		return set()
-
 	ret = set()
 	rcs = set(s.split(','))
-
 	if 'unknown' in rcs:
 		rcs.remove('unknown')
 		ret.add(None)
-
 	if 'nonzero' in rcs:
 		rcs.remove('nonzero')
 		ret |= set(range(1, 256))
-
 	for rc in rcs:
 		rc = rc.strip()
 		if not rc:
 			continue
 		ret.add(int(rc))
-
 	return ret
 
 
@@ -311,7 +295,6 @@ def print_done(host, cmd, exit_status, exits, total, window_id=None):
 		col = color.GREEN
 	else:
 		col = color.RED
-
 	if window_id is None:
 		print('%s%s: %s -> %s%s (%d of %d done)%s' % (col, host, cmd, exit_status, color.END, len(exits), total, color.END))
 	else:
