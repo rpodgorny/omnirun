@@ -377,7 +377,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, re
 
 				assert(w_id)
 
-				tmux.tmux_set_window_option(w_id, 'set-remain-on-exit', 'on')
+				tmux.tmux_set_window_option(w_id, 'remain-on-exit', 'on')
 				running[w_id] = (host, cmd)
 				print_start(host, command_to_display, hosts_to_go, total, retries, retry_limit, w_id)
 
@@ -389,7 +389,7 @@ def do_it(cmds, command_to_display, nprocs, interactive, keep_open, retry_on, re
 
 					# TODO: don't kill the window if it's currently open?
 					if is_dead and exit_status not in keep_open:
-						#tmux_set_window_option(w_id, 'set-remain-on-exit', 'off')
+						#tmux_set_window_option(w_id, 'remain-on-exit', 'off')
 						tmux.tmux_kill_window(w_id)
 				else:
 					print('%s not in statuses?!? wtf!!!' % w_id)
