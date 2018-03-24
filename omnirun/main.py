@@ -251,6 +251,9 @@ def main():
 	keep_open = rc_parse(args['--keep-open'])
 	retry_on = rc_parse(args['--retry-on'])
 	retry_limit = int(args['--retry-limit']) if args['--retry-limit'] else None
+	if retry_limit and not retry_on:
+		print('--retry-limit specified but --retry-on not, implying --retry-on=nonzero')
+		retry_on = rc_parse('nonzero')
 	terse = args['--terse']
 
 	try:
