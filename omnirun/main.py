@@ -220,16 +220,14 @@ def main():
 			tmp_fn = '/tmp/omnirun.%s' % int(time.time())
 
 			if args['<script>'].startswith(('http://', 'https://')):
-				cmd = 'ssh {sshopts} {host_full} "sh -c \'rm -rf {tmp_fn} && mkdir {tmp_fn} && cd {tmp_fn}; wget -O {tmp_fn}/script --no-check-certificate \"{script}\" && chmod a+x script && {sudo} ./script && cd - && rm -rf {tmp_fn}\'"'.format( \
-				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, script=args['<script>'], sudo=sudo)
+				cmd = 'ssh {sshopts} {host_full} "sh -c \'rm -rf {tmp_fn} && mkdir {tmp_fn} && cd {tmp_fn}; wget -O {tmp_fn}/script --no-check-certificate \"{script}\" && chmod a+x script && {sudo} ./script && cd - && rm -rf {tmp_fn}\'"'.format(sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, script=args['<script>'], sudo=sudo)
 			else:
 				# TODO: do this check outside of the loop
 				if not os.path.isfile(args['<script>']):
 					print('script \'%s\' does not exist' % args['<script>'])
 					return 1
 
-				cmd = 'ssh {sshopts} {host_full} "sh -c \'rm -rf {tmp_fn} && mkdir {tmp_fn} && cat >{tmp_fn}/script && cd {tmp_fn} && chmod a+x ./script && {sudo} ./script && cd - && rm -rf {tmp_fn}\'" <{script}'.format( \
-				sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, sudo=sudo, script=args['<script>'])
+				cmd = 'ssh {sshopts} {host_full} "sh -c \'rm -rf {tmp_fn} && mkdir {tmp_fn} && cat >{tmp_fn}/script && cd {tmp_fn} && chmod a+x ./script && {sudo} ./script && cd - && rm -rf {tmp_fn}\'" <{script}'.format(sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, sudo=sudo, script=args['<script>'])
 
 				# these are some other tries - probably broken or half-working...
 				#cmd = 'ssh %s %s \'sh -c "a=`mktemp`; cat >$a; chmod a+x $a; %s $a; rm $a"\' <%s' % (sshopts, host_full, sudo, args['<script>'])
