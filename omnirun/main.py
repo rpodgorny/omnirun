@@ -10,6 +10,7 @@ Usage:
   omnirun [options] <hosts> --copy-keys
 
 Options:
+  -i <fn>                        Use <fn> as inventory file ("-" for stdin).
   --no-strict-host-key-checking  Disable ssh host key checking.
   --interactive                  Interactive mode. You have to disconnect manually.
   -p <num>                       Number of parallel processes to run.
@@ -79,9 +80,7 @@ def sigint_handler(signum, frame):
 	exit_requested = True
 
 
-def get_hosts(fn):
-	with open(fn, 'r') as f:
-		lines = f.readlines()
+def parse_hosts(lines):
 	lines_exp = []
 	for line in lines:
 		line = line.strip()
@@ -162,14 +161,21 @@ def main():
 	args = docopt.docopt(__doc__, version=__version__)
 
 	tag_to_hosts = {'all': set()}
-	fn = os.path.expanduser('~/.omnirun.conf')
-	if os.path.isfile(fn):
-		for hostspec, tags in get_hosts(fn).items():
-			for tag in tags:
-				if tag not in tag_to_hosts:
-					tag_to_hosts[tag] = set()
-				tag_to_hosts[tag].add(hostspec_to_user_pass_host_port(hostspec))
-				tag_to_hosts['all'].add(hostspec_to_user_pass_host_port(hostspec))
+	if args['-i']:
+		fn = args['-i']
+	else:
+		fn = os.path.expanduser('~/.omnirun.conf')
+	if fn == '-':
+		lines = sys.stdin.readlines()
+	elif os.path.isfile(fn):
+		with open(fn, 'r') as f:
+			lines = f.readlines()
+	for hostspec, tags in parse_hosts(lines).items():
+		for tag in tags:
+			if tag not in tag_to_hosts:
+				tag_to_hosts[tag] = set()
+			tag_to_hosts[tag].add(hostspec_to_user_pass_host_port(hostspec))
+		tag_to_hosts['all'].add(hostspec_to_user_pass_host_port(hostspec))
 
 	hosts = set()
 	for hostspec in args['<hosts>'].split(','):
