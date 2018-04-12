@@ -6,24 +6,18 @@ TMUX = '/usr/bin/tmux'
 
 def tmux_window_statuses():
 	ret = {}
-
 	res = subprocess.check_output([TMUX, 'list-windows', '-F', '#{window_id} #{pane_dead} #{pane_dead_status}'], universal_newlines=True)
-
 	for line in res.split('\n'):
-		if not line: continue
-
+		if not line:
+			continue
 		w_id, pane_dead, *rest = line.split()
-
 		pane_dead = {'0': False, '1': True}[pane_dead]
-
 		# no status is shown for live panes (or when using old version of tmux)
 		if rest:
 			pane_dead_status = int(rest[0])
 		else:
 			pane_dead_status = None
-
 		ret[w_id] = (pane_dead, pane_dead_status)
-
 	return ret
 
 
