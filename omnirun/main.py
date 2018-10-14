@@ -4,14 +4,14 @@
 Omnirun. Run command on multiple hosts.
 
 Usage:
-  omnirun [options] <hosts>
-  omnirun [options] <hosts> <command>
-  omnirun [options] <hosts> [--sudo] --script <script>
-  omnirun [options] <hosts> --copy-keys
+  omnirun [options] <hostspec>
+  omnirun [options] <hostspec> <command>
+  omnirun [options] <hostspec> [--sudo] --script <script>
+  omnirun [options] <hostspec> --copy-keys
 
 Options:
   -i,--inventory=<fn>               Use <fn> as inventory file ("-" for stdin).
-  -X,--no-strict-host-key-checking  Disable ssh host key checking.
+  -X,--no-strict-host-key-checking  Disable ssh host key checking (you really shouldn't be using this!).
   -I,--interactive                  Interactive mode. You have to disconnect manually.
   -p <num>                          Number of parallel processes to run.
   --tmux                            Use tmux for parallelization.
@@ -33,7 +33,7 @@ Arguments:
   <hosts>    Hosts to connect to.
   <command>  Command to run.
 
-Host specification:
+Host specification (hostspec):
   [<username>[:<password>]@]<hostname>[:<port>] where <hostname> can be:
     * plain hostname (server34.company.com)
     * ip address (192.168.22.44)
@@ -41,6 +41,12 @@ Host specification:
     * ip address with range(s) (192.168.22.[1-57,66,77,88-90])
     * tag - has to start with hash (#linux)
     * nothing - the implicit #all tag is used
+
+Inventory file format:
+  Newline seperated list of hostspecs and tags (space seperated). Such as:
+    user:pass@host1.company.com tag1 tag2
+    :pass2@host2.company.com tag2 tag3
+  Hostspec can be specified multiple times - tags are merged in such case.
 '''
 
 from omnirun.version import __version__
