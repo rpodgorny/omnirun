@@ -48,8 +48,10 @@ def tmux_respawn_pane(w_id, cmd):
 	res = subprocess.check_output([TMUX, 'respawn-pane', '-t', ':%s' % w_id, '-k', cmd], universal_newlines=True)
 
 
+# TODO: this generates a lot of whitespace and tmux-related strings (-> so far unusable)
 def tmux_capture_pane(w_id):
-	res = subprocess.check_output([TMUX, 'capture-pane', '-t', ':%s' % w_id, '-p'], universal_newlines=True)
+	res = subprocess.check_output([TMUX, 'capture-pane', '-t', ':%s' % w_id, '-p', '-J', '-S', '-', '-E', '-'], universal_newlines=True)
+	return res
 
 
 def tmux_set_window_option(w_id, option, value):
