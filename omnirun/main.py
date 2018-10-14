@@ -10,7 +10,7 @@ Usage:
   omnirun [options] <hostspec> --copy-keys
 
 Options:
-  -i,--inventory=<fn>               Use <fn> as inventory file ("-" for stdin).
+  -i,--inventory=<fn>               Use <fn> as inventory file ("-" for stdin). Defaults to "~/.omnirun.conf".
   -X,--no-strict-host-key-checking  Disable ssh host key checking (you really shouldn't be using this!).
   -I,--interactive                  Interactive mode. You have to disconnect manually.
   -p <num>                          Number of parallel processes to run.
