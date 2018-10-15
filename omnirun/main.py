@@ -30,8 +30,8 @@ Options:
   --json                            Save captured output in json format.
 
 Arguments:
-  <hosts>    Hosts to connect to.
-  <command>  Command to run.
+  <hostspec>  Host specification to connect to.
+  <command>   Command to run.
 
 Host specification (hostspec):
   [<username>[:<password>]@]<hostname>[:<port>] where <hostname> can be:
@@ -194,8 +194,7 @@ def main():
 		with open(fn, 'r') as f:
 			lines = f.readlines()
 	else:
-		print('unable to read inventofy file %s' % fn)
-		return 1
+		lines = []
 	for hostspec, tags in parse_hosts(lines).items():
 		for tag in tags:
 			if tag not in tag_to_hosts:
@@ -203,7 +202,7 @@ def main():
 			tag_to_hosts[tag].add(hostspec_to_user_pass_host_port(hostspec))
 		tag_to_hosts['all'].add(hostspec_to_user_pass_host_port(hostspec))
 
-	hostspecs_ = args['<hosts>']
+	hostspecs_ = args['<hostspec>']
 	if ',' in hostspecs_ and '[' not in hostspecs_:
 		hostspecs_ = hostspecs_.split(',')
 	else:
