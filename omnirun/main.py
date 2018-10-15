@@ -223,7 +223,6 @@ def main():
 				for eh in expand_host(ho_):
 					hosts.add((us_, pa_, eh, po_))
 		else:
-			print(host_or_tag)
 			for h in expand_host(host_or_tag):
 				hosts.add((user, pass_, h, port))
 	if not hosts:
