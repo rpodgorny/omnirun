@@ -232,7 +232,7 @@ def main():
 		print('no hosts')
 		return 1
 
-	tmpdir = None
+	script, tmpdir = None, None
 	if args['--copy-keys']:
 		command_to_display = '<ssh-copy-id>'
 	elif args['<script>']:
