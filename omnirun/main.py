@@ -59,6 +59,9 @@ import subprocess
 import signal
 import omnirun.tmux as tmux
 import json
+import tempfile
+import urllib.request
+import shutil
 
 
 SSHPASS = '/usr/bin/sshpass'
@@ -229,10 +232,20 @@ def main():
 		print('no hosts')
 		return 1
 
+	tmpdir = None
 	if args['--copy-keys']:
 		command_to_display = '<ssh-copy-id>'
 	elif args['<script>']:
 		command_to_display = '<script> %s' % args['<script>']
+		script = args['<script>']
+		if script.startswith(('http://', 'https://')):
+			tmpdir = tempfile.mkdtemp()
+			print('downloading %s to %s/script' % (script, tmpdir))
+			urllib.request.urlretrieve(script, '%s/script' % tmpdir)
+			script = '%s/script' % tmpdir
+		elif not os.path.isfile(script):
+			print('script \'%s\' does not exist' % args['<script>'])
+			return 1
 	elif args['<command>']:
 		command_to_display = args['<command>']
 	else:
@@ -254,22 +267,15 @@ def main():
 			#cmd = 'ssh-copy-id -i %s %s' % (PUB_KEY_FN, host_full)
 			cmd = 'ssh-copy-id %s' % host_full
 			cmd += ' -p %d' % port if port else ''
-		elif args['<script>']:
+		elif script:
 			script_args = args['<script_arg>']
 			sudo = 'sudo' if args['--sudo'] else ''
 			tmp_fn = '/tmp/omnirun.%s' % int(time.time())
-			if args['<script>'].startswith(('http://', 'https://')):
-				cmd = 'ssh {sshopts} {host_full} "sh -c \'rm -rf {tmp_fn} && mkdir {tmp_fn} && cd {tmp_fn}; wget -O {tmp_fn}/script --no-check-certificate \"{script}\" && chmod a+x script && {sudo} ./script {script_args} && cd - && rm -rf {tmp_fn}\'"'.format(sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, script=args['<script>'], script_args=' '.join(script_args), sudo=sudo)
-			else:
-				# TODO: do this check outside of the loop
-				if not os.path.isfile(args['<script>']):
-					print('script \'%s\' does not exist' % args['<script>'])
-					return 1
-				cmd = 'ssh {sshopts} {host_full} "sh -c \'rm -rf {tmp_fn} && mkdir {tmp_fn} && cat >{tmp_fn}/script && cd {tmp_fn} && chmod a+x ./script && {sudo} ./script {script_args} && cd - && rm -rf {tmp_fn}\'" <{script}'.format(sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, sudo=sudo, script=args['<script>'], script_args=' '.join(script_args))
-				# these are some other tries - probably broken or half-working...
-				#cmd = 'ssh %s %s \'sh -c "a=`mktemp`; cat >$a; chmod a+x $a; %s $a; rm $a"\' <%s' % (sshopts, host_full, sudo, args['<script>'])
-				#cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s"' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn)
-				#cmd = 'ssh %s %s "cat | %s sh"' % (sshopts, host_full, sudo)
+			cmd = 'ssh {sshopts} {host_full} "sh -c \'rm -rf {tmp_fn} && mkdir {tmp_fn} && cat >{tmp_fn}/script && cd {tmp_fn} && chmod a+x ./script && {sudo} ./script {script_args} && cd - && rm -rf {tmp_fn}\'" <{script}'.format(sshopts=sshopts, host_full=host_full, tmp_fn=tmp_fn, sudo=sudo, script=script, script_args=' '.join(script_args))
+			# these are some other tries - probably broken or half-working...
+			#cmd = 'ssh %s %s \'sh -c "a=`mktemp`; cat >$a; chmod a+x $a; %s $a; rm $a"\' <%s' % (sshopts, host_full, sudo, script)
+			#cmd = 'ssh %s %s "cat >%s; chmod a+x %s; %s %s; rm %s"' % (sshopts, host_full, tmp_fn, tmp_fn, sudo, tmp_fn, tmp_fn)
+			#cmd = 'ssh %s %s "cat | %s sh"' % (sshopts, host_full, sudo)
 		elif args['<command>']:
 			cmd = 'ssh %s %s "%s"' % (sshopts, host_full, args['<command>'].replace('"', '\\"'))
 		else:
@@ -312,6 +318,9 @@ def main():
 		print('TMUX environment not set, implying -p1')
 		nprocs = 1
 	results_by_host = do_it(cmds, command_to_display, nprocs, interactive, tmux_, keep_open, retry_on, retry_limit, capture_fn, json_)
+	if tmpdir:
+		print('removing %s' % tmpdir)
+		shutil.rmtree(tmpdir)
 	print()
 	print_stats(results_by_host, terse)
 
