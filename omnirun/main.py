@@ -36,8 +36,8 @@ Arguments:
 Host specification (hostspec):
   [<username>[:<password>]@]<hostname>[:<port>] where <hostname> can be:
     * plain hostname (server34.company.com)
-    * ip address (192.168.22.44)
     * hostname with range(s) (machine[1-57,66,77,88-90].company.com)
+    * ip address (192.168.22.44)
     * ip address with range(s) (192.168.22.[1-57,66,77,88-90])
     * tag - has to start with hash (#linux)
     * nothing - the implicit #all tag is used
