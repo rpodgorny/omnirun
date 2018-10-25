@@ -213,16 +213,12 @@ def main():
 	hosts = set()
 	for hostspec in hostspecs_:
 		user, pass_, host_or_tag, port = hostspec_to_user_pass_host_port(hostspec)
-		if not host_or_tag:
-			host_or_tag = '#all'
+		host_or_tag = host_or_tag if host_or_tag else '#all'
 		if host_or_tag.startswith('#'):
 			for us_, pa_, ho_, po_ in tag_to_hosts.get(host_or_tag[1:], set()):
-				if user:
-					us_ = user
-				if pass_:
-					pa_ = pass_
-				if port:
-					po_ = port
+				us_ = user if user else us_
+				pa_ = pass_ if pass_ else pa_
+				po_ = port if port else po_
 				for eh in expand_host(ho_):
 					hosts.add((us_, pa_, eh, po_))
 		else:
