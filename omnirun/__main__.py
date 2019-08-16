@@ -1,3 +1,4 @@
 import omnirun.main
+import sys
 
-omnirun.main.main()
+sys.exit(omnirun.main.main())

@@ -319,6 +319,7 @@ def main():
 		shutil.rmtree(tmpdir)
 	print()
 	print_stats(results_by_host, terse)
+	return 1 if any(i['rc'] != 0 for i in results_by_host.values()) else 0
 
 
 def print_start(host, cmd, hosts_to_go, total, retries, retry_limit, _id=None):
