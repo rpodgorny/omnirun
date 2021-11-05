@@ -10,17 +10,17 @@ setup(
 	author = 'Radek Podgorny',
 	author_email = 'radek@podgorny.cz',
 	license = 'GPL',
-	#packages = find_packages(exclude=['contrib', 'docs', 'tests', 'tests*', ]),
-	packages = ['omnirun', ],
-	install_requires = ['docopt', ],
+	#packages = find_packages(exclude=['contrib', 'docs', 'tests', 'tests*']),
+	packages = ['omnirun'],
+	install_requires = ['docopt'],
 	extras_require = {
-		'tests': ['coverage', ],
+		'tests': ['coverage'],
 	},
 	package_data = {
-		'omnirun': ['version.py', ],
+		'omnirun': ['version.py'],
 	},
 	entry_points = {
-		'console_scripts': ['omnirun=omnirun.main:main', ],
+		'console_scripts': ['omnirun=omnirun.main:main'],
 	},
 	test_suite = 'tests',
 )
