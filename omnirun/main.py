@@ -4,6 +4,7 @@
 Omnirun. Run command on multiple hosts.
 
 Usage:
+  omnirun -i - [options] <command>
   omnirun [options] <hostspec>
   omnirun [options] <hostspec> <command>
   omnirun [options] <hostspec> [--sudo] --script <script> [<script_arg>...]
@@ -206,10 +207,12 @@ def main():
 		tag_to_hosts['all'].add(hostspec_to_user_pass_host_port(hostspec))
 
 	hostspecs_ = args['<hostspec>']
-	if ',' in hostspecs_ and '[' not in hostspecs_:
+	if hostspecs_ is None:
+		hostspecs_ = ["#all"]
+	elif ',' in hostspecs_ and '[' not in hostspecs_:
 		hostspecs_ = hostspecs_.split(',')
 	else:
-		hostspecs_ = [hostspecs_, ]
+		hostspecs_ = [hostspecs_]
 	hosts = set()
 	for hostspec in hostspecs_:
 		user, pass_, host_or_tag, port = hostspec_to_user_pass_host_port(hostspec)
