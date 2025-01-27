@@ -1,2 +1,2 @@
 #!/bin/sh
-exec pipenv run python -m omnirun "$@"
+exec uv run python -m omnirun "$@"
