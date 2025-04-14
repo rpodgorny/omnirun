@@ -7,15 +7,15 @@ authors = ["Radek Podgorny <radek@podgorny.cz>"]
 license = "GPL"
 
 [dependencies]
-clap = { version = "4.4", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
-regex = "1.9"
-colored = "2.0"
+regex = "1.11"
+colored = "3.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tempfile = "3.8"
-reqwest = { version = "0.11", features = ["json"] }
+tempfile = "3.19"
+reqwest = { version = "0.12", features = ["json"] }
 futures = "0.3"
 ctrlc = "3.4"
 shellexpand = "3.1"
