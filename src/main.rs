@@ -4,7 +4,7 @@ use colored::Colorize;
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
 use std::env;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead};
 use std::process::Stdio;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -152,7 +152,7 @@ async fn main() -> Result<()> {
     // Parse inventory and tags
     let mut tag_to_hosts: HashMap<
         String,
-        HashSet<(Option<String>, Option<String>, String, Option<u16>)>,
+        HashSet<HostSpec>,
     > = HashMap::new();
     tag_to_hosts.insert("all".to_string(), HashSet::new());
 
@@ -414,7 +414,7 @@ async fn main() -> Result<()> {
         && nprocs > 1
         && !fs::metadata(tmux::TMUX)
             .await
-            .map_or(false, |m| m.is_file())
+            .is_ok_and(|m| m.is_file())
     {
         println!("{} not found, implying -p1", tmux::TMUX.red());
         adjusted_nprocs = 1;
